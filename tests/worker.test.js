@@ -1,0 +1,41 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import { createWorker } from '../server/worker.js';
+import { createStorage } from '../server/storage.js';
+const env = { SUPABASE_URL: 'https://project.supabase.co', SUPABASE_SECRET_KEY: 'sb_secret_test', SESSION_SECRET: 'session-test', UPLOAD_PASSWORD: 'test-password', APP_ORIGIN: 'https://sentence.example' };
+const png = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+a6FEAAAAASUVORK5CYII=', 'base64');
+test('hosted Worker serves assets, protects uploads, and saves a submission', async () => {
+  const records = [];
+  const app = createWorker({ assets: { '/index.html': { type: 'text/html', body: btoa('<h1>Sentence Project</h1>') } }, storageFactory: () => ({ list: async () => [], save: async record => records.push(record) }) });
+  const request = (path, options) => app.fetch(new Request(env.APP_ORIGIN + path, options), env);
+  assert.equal(await (await request('/')).text(), '<h1>Sentence Project</h1>');
+  assert.equal((await request('/.env')).status, 404);
+  assert.equal((await request('/api/entries', { method: 'POST' })).status, 401);
+  const login = await request('/api/session', { method: 'POST', headers: { 'Content-Type': 'application/json', Origin: env.APP_ORIGIN }, body: JSON.stringify({ password: env.UPLOAD_PASSWORD }) });
+  assert.equal(login.status, 200);
+  const cookie = login.headers.get('set-cookie').split(';')[0];
+  assert.match(login.headers.get('set-cookie'), /Secure/);
+  assert.equal((await (await request('/api/session', { headers: { cookie } })).json()).authenticated, true);
+  assert.equal((await (await request('/api/session', { headers: { cookie: cookie + 'x' } })).json()).authenticated, false);
+  const form = new FormData();
+  for (const [key, value] of Object.entries({ name: 'Writer', email: 'writer@example.org', session: 'September', caption: 'Hello', includeName: 'no' })) form.set(key, value);
+  form.set('photo', new Blob([png], { type: 'image/png' }), 'journal.png');
+  const result = await request('/api/entries', { method: 'POST', headers: { cookie, Origin: env.APP_ORIGIN }, body: form });
+  assert.equal(result.status, 201);
+  assert.equal(records.length, 1);
+  assert.equal(records[0].include_name, false);
+  assert.equal((await request('/api/entries', { method: 'POST', headers: { cookie, Origin: 'https://other.example' }, body: form })).status, 403);
+  assert.deepEqual(await (await request('/api/entries')).json(), { entries: [], preview: false, nextOffset: null });
+});
+test('new Supabase secret keys use apikey without an invalid JWT header', async () => {
+  const requests = [];
+  const storage = createStorage({ url: env.SUPABASE_URL, key: env.SUPABASE_SECRET_KEY, fetchImpl: async (url, options) => {
+    requests.push(options);
+    assert.equal(options.headers.apikey, env.SUPABASE_SECRET_KEY);
+    assert.equal(options.headers.Authorization, undefined);
+    return Response.json(url.includes('/gallery_entries') ? [] : {});
+  } });
+  await storage.list(0);
+  await storage.save({ id: 'test' }, png, 'image/png');
+  assert.equal(requests.length, 3);
+});

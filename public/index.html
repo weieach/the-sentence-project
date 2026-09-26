@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="The Sentence Project: a community archive of personal writing and visual expression.">
+  <title>The Sentence Project</title>
+  <link rel="icon" href="/assets/arrow.png" type="image/png">
+  <link rel="stylesheet" href="/styles.css">
+  <script src="/app.js" defer></script>
+</head>
+<body data-page="home">
+<header class="site-header">
+  <a class="brand" href="/" aria-label="The Sentence Project home">
+    <span class="brand-symbol" aria-hidden="true"><img src="/assets/arrow.png" alt=""></span>
+    <span class="brand-name">Sentence<span>Project</span></span>
+    <p class="tagline">stories and sometimes pictures</p>
+  </a>
+  <nav class="site-nav" aria-label="Main navigation">
+    <a href="/" aria-current="page">gallery</a>
+    <a href="/about.html">about + contact</a>
+    <a href="/upload.html" data-upload-link>upload</a>
+  </nav>
+</header>
+<main class="content" aria-label="Gallery">
+  <div class="gallery" id="gallery"></div>
+  <p class="status gallery-status" id="gallery-status" role="status">Loading the gallery…</p>
+  <noscript>Enable JavaScript to view the gallery.</noscript>
+</main>
+<dialog class="dialog" id="password-dialog" aria-labelledby="password-title">
+  <button type="button" class="dialog-close" aria-label="Close password dialog">×</button>
+  <form id="password-form">
+    <h2 id="password-title">Contribute</h2>
+    <p>Enter your session password to upload.</p>
+    <label for="password">Password</label>
+    <input id="password" name="password" type="password" autocomplete="current-password" required maxlength="200">
+    <p id="password-status" class="status error" role="alert"></p>
+    <button class="action-button" type="submit">Continue</button>
+  </form>
+</dialog>
+</body>
+</html>

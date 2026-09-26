@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="The Sentence Project: a community archive of personal writing and visual expression.">
+  <title>Upload — The Sentence Project</title>
+  <link rel="icon" href="/assets/arrow.png" type="image/png">
+  <link rel="stylesheet" href="/styles.css">
+  <script src="/app.js" defer></script>
+</head>
+<body data-page="upload">
+<header class="site-header">
+  <a class="brand" href="/" aria-label="The Sentence Project home">
+    <span class="brand-symbol" aria-hidden="true"><img src="/assets/arrow.png" alt=""></span>
+    <span class="brand-name">Sentence<span>Project</span></span>
+    
+  </a>
+  <nav class="site-nav" aria-label="Main navigation">
+    <a href="/">gallery</a>
+    <a href="/about.html">about + contact</a>
+    <a href="/upload.html" data-upload-link aria-current="page">upload</a>
+  </nav>
+</header>
+<main class="content">
+  <p id="upload-gate" class="status">Enter the session password using the <a href="/upload.html" data-upload-link>upload</a> link to contribute.</p>
+  <form class="upload-form" id="upload-form" hidden>
+    <fieldset class="form-section">
+      <legend>background</legend>
+      <div class="form-row"><label for="name">1. Your name</label><input id="name" name="name" autocomplete="name" required maxlength="120"></div>
+      <div class="form-row"><label for="email">2. Email address</label><input id="email" name="email" type="email" autocomplete="email" required maxlength="254"></div>
+      <div class="form-row"><label for="session">3. Sentence Project session attended</label><input id="session" name="session" required maxlength="200"></div>
+    </fieldset>
+    <fieldset class="form-section">
+      <legend>contribute</legend>
+      <div class="form-row"><label for="photo">4. Upload photo</label><div><input id="photo" name="photo" type="file" accept="image/jpeg,image/png,image/webp" required aria-describedby="photo-note"><p class="field-note" id="photo-note">JPG, PNG, or WebP. Up to 8 MB.</p><img id="upload-preview" class="upload-preview" alt="Your selected photo" hidden></div></div>
+      <div class="form-row"><label for="caption">5. Photo caption</label><input id="caption" name="caption" required maxlength="500"></div>
+      <fieldset class="choice-row"><legend>6. Would you like your name included with your photo caption?</legend><div class="choices"><label><input type="radio" name="includeName" value="yes" required> Yes</label><label><input type="radio" name="includeName" value="no" required> No</label></div></fieldset>
+      <div class="form-row long-row"><label for="sentence">7. If you’d like to share a particular sentence from today’s writing, please type it here</label><textarea id="sentence" name="sentence" rows="2" maxlength="2000"></textarea></div>
+    </fieldset>
+    <fieldset class="form-section">
+      <legend>about you</legend>
+      <div class="form-row"><label for="hometown">8. Where are you from?</label><input id="hometown" name="hometown" autocomplete="address-level2" maxlength="200"></div>
+      <div class="form-row long-row"><label for="whyWrite">9. Why write?</label><textarea id="whyWrite" name="whyWrite" rows="3" maxlength="4000" aria-describedby="word-count"></textarea><p class="field-note" id="word-count">0 / 50 words</p></div>
+    </fieldset>
+    <p class="status" id="upload-status" role="status"></p>
+    <button class="action-button" type="submit">Submit</button>
+  </form>
+  <noscript>Enable JavaScript to submit a contribution.</noscript>
+</main>
+<dialog class="dialog" id="password-dialog" aria-labelledby="password-title">
+  <button type="button" class="dialog-close" aria-label="Close password dialog">×</button>
+  <form id="password-form">
+    <h2 id="password-title">Contribute</h2>
+    <p>Enter your session password to upload.</p>
+    <label for="password">Password</label>
+    <input id="password" name="password" type="password" autocomplete="current-password" required maxlength="200">
+    <p id="password-status" class="status error" role="alert"></p>
+    <button class="action-button" type="submit">Continue</button>
+  </form>
+</dialog>
+</body>
+</html>

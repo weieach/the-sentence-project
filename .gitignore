@@ -1,0 +1,7 @@
+.env
+node_modules/
+tmp/
+.DS_Store
+reference/
+dist/
+.sites-runtime/
