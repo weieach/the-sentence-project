@@ -55,6 +55,7 @@ if (header) {
   const syncHeaderOffset = () => {
     // Reserve the expanded header's space so shrinking it cannot move the scroll trigger.
     const expandedHeight = header.getBoundingClientRect().height - (parseFloat(brand?.style.marginBottom) || 0);
+    document.body.style.setProperty('--current-header-height', `${header.getBoundingClientRect().height}px`);
     document.body.style.setProperty('--header-height', `${expandedHeight}px`);
     document.body.style.paddingTop = `${expandedHeight}px`;
   };
@@ -63,14 +64,14 @@ if (header) {
   window.addEventListener('load', syncHeaderOffset);
 }
 
-const contactIntro = document.querySelector('body[data-page="home"] .contact-intro');
-if (contactIntro) {
-  // Leave room for the contact introduction and its surrounding padding in the first viewport.
-  const syncContactIntroHeight = () => {
-    document.body.style.setProperty('--contact-intro-height', `${contactIntro.getBoundingClientRect().height}px`);
+const contactFooter = document.querySelector('body[data-page="home"] .contact-section');
+if (contactFooter) {
+  // The ending section fills the viewport space left by the current header and full footer.
+  const syncContactFooterHeight = () => {
+    document.body.style.setProperty('--contact-footer-height', `${contactFooter.getBoundingClientRect().height}px`);
   };
-  syncContactIntroHeight();
-  new ResizeObserver(syncContactIntroHeight).observe(contactIntro);
+  syncContactFooterHeight();
+  new ResizeObserver(syncContactFooterHeight).observe(contactFooter);
 }
 
 const dialog = document.querySelector('#password-dialog');
@@ -282,14 +283,7 @@ async function loadGallery() {
       status.textContent = result.preview ? 'Layout preview using images from the project sketch. Submission storage is not connected yet.' : (gallery.children.length ? '' : 'No contributions yet.');
     } while (next !== null);
     if (gallery.querySelector('figure')) {
-      const end = document.createElement('div');
-      end.className = 'gallery-end';
-      end.setAttribute('aria-hidden', 'true');
-      for (let i = 0; i < 3; i++) {
-        end.append(document.createElement('span'));
-      }
-      gallery.append(end);
-      document.querySelector('.gallery-invitation').hidden = false;
+      document.querySelector('.gallery-ending').hidden = false;
     }
   } catch {
     status.textContent = 'The gallery could not be loaded. Please refresh to try again.';

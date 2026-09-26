@@ -252,9 +252,9 @@ main {
 }
 
 body[data-page="home"] main {
-  min-height: max(0px, calc(100svh - var(--header-height, 10rem) - 2rem - var(--contact-intro-height, 0px) - 2 * var(--contact-top-padding)));
+  min-height: 0;
   margin-top: 2rem;
-  padding-bottom: var(--contact-top-padding);
+  padding-bottom: 0;
 }
 
 body[data-page="upload"] main {
@@ -295,13 +295,21 @@ body[data-page="upload"] main {
   overflow-wrap: anywhere;
 }
 
+.gallery-ending {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-height: max(0px, calc(100vh - var(--current-header-height, 10rem) - var(--contact-footer-height, 0px)));
+  padding-block: var(--contact-top-padding);
+}
+
 .gallery-end {
   --divider-thickness: 1px;
   grid-column: 1 / -1;
   display: flex;
   align-items: center;
   gap: .85rem;
-  margin-top: 2rem;
+  flex-shrink: 0;
 }
 
 .gallery-end::before,
