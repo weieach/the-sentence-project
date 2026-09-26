@@ -23,6 +23,11 @@ export function createStorage({ url = globalThis.process?.env?.SUPABASE_URL, key
       return rows.map(row => ({ id: row.id, caption: row.caption, displayName: row.display_name, year: row.year,
         imageUrl: `${base}/storage/v1/object/public/${BUCKET}/${encodeURIComponent(row.image_path)}` }));
     },
+    async listAdmin(offset) {
+      const rows = await request(`/rest/v1/submissions?select=id,name,email,session_attended,image_path,caption,include_name,sentence,hometown,why_write,year,created_at&order=created_at.desc,id.desc&offset=${offset}&limit=50`);
+      return rows.map(row => ({ ...row,
+        imageUrl: `${base}/storage/v1/object/public/${BUCKET}/${encodeURIComponent(row.image_path)}` }));
+    },
     async save(record, bytes, mime) {
       const imagePath = `${record.id}.${mime === 'image/jpeg' ? 'jpg' : mime === 'image/png' ? 'png' : 'webp'}`;
       await request(`/storage/v1/object/${BUCKET}/${imagePath}`, { method: 'POST', headers: { 'Content-Type': mime, 'x-upsert': 'false' }, body: bytes });

@@ -5,3 +5,7 @@ tmp/
 reference/
 dist/
 .sites-runtime/
+
+.vercel/
+.vercel
+.env*

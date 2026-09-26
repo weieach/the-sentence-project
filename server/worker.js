@@ -1,6 +1,6 @@
 import { createStorage } from './storage.js';
 import { validateSubmission, checkImage, HttpError } from './validation.js';
-import { MAX_IMAGE_BYTES } from './config.js';
+import { MAX_IMAGE_BYTES, ADMIN_USERNAME, ADMIN_PASSWORD } from './config.js';
 
 // The build embeds only public/ here. Secrets are supplied by the hosting runtime.
 const bundledAssets = {};
@@ -35,7 +35,7 @@ async function limitedBody(request, limit) {
     const { done, value } = await reader.read();
     if (done) break;
     size += value.byteLength;
-    if (size > limit) { await reader.cancel(); throw new HttpError(413, 'The upload is too large. Choose an image up to 8 MB.'); }
+    if (size > limit) { await reader.cancel(); throw new HttpError(413, 'The upload is too large. Choose an image up to 4 MB.'); }
     chunks.push(value);
   }
   const bytes = new Uint8Array(size);
@@ -43,13 +43,14 @@ async function limitedBody(request, limit) {
   for (const chunk of chunks) { bytes.set(chunk, offset); offset += chunk.byteLength; }
   return bytes;
 }
-async function hasSession(request, secret) {
-  const cookie = request.headers.get('cookie')?.split(';').map(v => v.trim()).find(v => v.startsWith('sentence_session='))?.slice(17);
+async function hasSession(request, secret, admin = false) {
+  const name = admin ? 'sentence_admin' : 'sentence_session';
+  const cookie = request.headers.get('cookie')?.split(';').map(v => v.trim()).find(v => v.startsWith(`${name}=`))?.slice(name.length + 1);
   if (!cookie || !secret) return false;
   const [expires, signature, extra] = cookie.split('.');
-  return !extra && /^\d+$/.test(expires) && Number(expires) > Date.now() && typeof signature === 'string' && await equal(signature, await sign(expires, secret));
+  return !extra && /^\d+$/.test(expires) && Number(expires) > Date.now() && typeof signature === 'string' && await equal(signature, await sign(admin ? `admin:${expires}` : expires, secret));
 }
-export function createWorker({ assets = bundledAssets, storageFactory = createStorage } = {}) {
+export function createWorker({ assets = bundledAssets, storageFactory = createStorage, clientIp = request => request.headers.get('cf-connecting-ip') || 'unknown' } = {}) {
   const attempts = new Map();
   return {
     async fetch(request, env) {
@@ -66,30 +67,42 @@ export function createWorker({ assets = bundledAssets, storageFactory = createSt
         if (!env.SUPABASE_URL || !(env.SUPABASE_SECRET_KEY || env.SUPABASE_SERVICE_ROLE_KEY) || !env.SESSION_SECRET || !env.UPLOAD_PASSWORD) {
           throw new HttpError(503, 'The site is not ready to accept submissions.');
         }
-        if (request.method === 'POST' && ((request.headers.get('origin') && request.headers.get('origin') !== (env.APP_ORIGIN || url.origin)) || request.headers.get('sec-fetch-site') === 'cross-site')) {
+        if (['POST', 'DELETE'].includes(request.method) && ((request.headers.get('origin') && request.headers.get('origin') !== (env.APP_ORIGIN || url.origin)) || request.headers.get('sec-fetch-site') === 'cross-site')) {
           throw new HttpError(403, 'Please submit from this website.');
         }
-        if (path === '/api/session' && request.method === 'GET') return json(200, { authenticated: await hasSession(request, env.SESSION_SECRET) });
-        if (path === '/api/session' && request.method === 'POST') {
+        const admin = path === '/api/admin-session';
+        const sessionPath = admin || path === '/api/session';
+        if (sessionPath && request.method === 'GET') return json(200, { authenticated: await hasSession(request, env.SESSION_SECRET, admin) });
+        if (admin && request.method === 'DELETE') return json(200, { authenticated: false }, { 'Set-Cookie': 'sentence_admin=; Path=/; HttpOnly; SameSite=Strict; Max-Age=0; Secure' });
+        if (sessionPath && request.method === 'POST') {
           if (!request.headers.get('content-type')?.startsWith('application/json')) throw new HttpError(415, 'Expected a password request.');
           const now = Date.now();
           for (const [key, value] of attempts) if (value.expires < now) attempts.delete(key);
-          const ip = request.headers.get('cf-connecting-ip') || 'unknown';
+          const ip = `${admin ? 'admin' : 'upload'}:${clientIp(request)}`;
           const attempt = attempts.get(ip) || { count: 0, expires: now + 15 * 60 * 1000 };
           if (attempt.count >= 10) return json(429, { error: 'Too many attempts. Please try again in 15 minutes.' }, { 'Retry-After': '900' });
           let data;
           const bytes = await limitedBody(request, 1024);
           try { data = JSON.parse(new TextDecoder().decode(bytes)); } catch { throw new HttpError(400, 'Invalid password request.'); }
-          if (typeof data?.password !== 'string' || !await equal(data.password, env.UPLOAD_PASSWORD)) {
+          const passwordMatches = typeof data?.password === 'string' && await equal(data.password, admin ? (env.ADMIN_PASSWORD || ADMIN_PASSWORD) : env.UPLOAD_PASSWORD);
+          const usernameMatches = !admin || (typeof data?.username === 'string' && await equal(data.username, env.ADMIN_USERNAME || ADMIN_USERNAME));
+          if (!passwordMatches || !usernameMatches) {
             attempt.count++;
             attempts.set(ip, attempt);
-            throw new HttpError(401, 'That password is not correct. Please try again.');
+            throw new HttpError(401, admin ? 'Incorrect username or password. Please try again.' : 'That password is not correct. Please try again.');
           }
           attempts.delete(ip);
           const expires = String(now + 2 * 60 * 60 * 1000);
-          return json(200, { authenticated: true }, { 'Set-Cookie': `sentence_session=${expires}.${await sign(expires, env.SESSION_SECRET)}; Path=/; HttpOnly; SameSite=Strict; Max-Age=7200; Secure` });
+          return json(200, { authenticated: true }, { 'Set-Cookie': `${admin ? 'sentence_admin' : 'sentence_session'}=${expires}.${await sign(admin ? `admin:${expires}` : expires, env.SESSION_SECRET)}; Path=/; HttpOnly; SameSite=Strict; Max-Age=7200; Secure` });
         }
         const storage = storageFactory({ url: env.SUPABASE_URL, key: env.SUPABASE_SECRET_KEY || env.SUPABASE_SERVICE_ROLE_KEY });
+        if (path === '/api/admin-entries' && request.method === 'GET') {
+          if (!await hasSession(request, env.SESSION_SECRET, true)) throw new HttpError(401, 'Please log in as an admin to view submissions.');
+          const offset = Number(url.searchParams.get('offset') || 0);
+          if (!Number.isSafeInteger(offset) || offset < 0) throw new HttpError(400, 'Invalid submissions offset.');
+          const entries = await storage.listAdmin(offset);
+          return json(200, { entries, nextOffset: entries.length === 50 ? offset + 50 : null });
+        }
         if (path === '/api/entries' && request.method === 'GET') {
           const offset = Number(url.searchParams.get('offset') || 0);
           if (!Number.isSafeInteger(offset) || offset < 0) throw new HttpError(400, 'Invalid gallery offset.');

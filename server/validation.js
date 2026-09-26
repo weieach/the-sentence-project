@@ -23,7 +23,7 @@ export function validateSubmission(form) {
   if (whyWrite.split(/\s+/u).filter(Boolean).length > 50) throw new HttpError(400, 'Please keep “Why write?” to 50 words or fewer.');
   const photo = form.get('photo');
   if (!photo || typeof photo.arrayBuffer !== 'function' || !photo.size || photo.size > MAX_IMAGE_BYTES || !['image/jpeg', 'image/png', 'image/webp'].includes(photo.type)) {
-    throw new HttpError(400, 'Choose a JPG, PNG, or WebP image up to 8 MB.');
+    throw new HttpError(400, 'Choose a JPG, PNG, or WebP image up to 4 MB.');
   }
   return { record: { name, email, session_attended: session, caption, include_name: includeName === 'yes', sentence, hometown, why_write: whyWrite }, photo };
 }

@@ -3,7 +3,7 @@ import { readFile, stat } from 'node:fs/promises';
 import { resolve, extname, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createHash, createHmac, randomBytes, randomUUID, timingSafeEqual } from 'node:crypto';
-import { UPLOAD_PASSWORD, MAX_IMAGE_BYTES } from './config.js';
+import { UPLOAD_PASSWORD, MAX_IMAGE_BYTES, ADMIN_USERNAME, ADMIN_PASSWORD } from './config.js';
 import { createStorage } from './storage.js';
 import { validateSubmission, checkImage, HttpError } from './validation.js';
 
@@ -12,14 +12,15 @@ const mimeTypes = { '.html': 'text/html; charset=utf-8', '.css': 'text/css; char
 const previewCaptions = ['caption language', 'calligraphic greeting', 'new idea', 'calligraphic greeting', 'new idea', 'calligraphic greeting'];
 const hash = value => createHash('sha256').update(value).digest();
 
-export function createApp({ storage = createStorage(), password = UPLOAD_PASSWORD, secret = process.env.SESSION_SECRET || randomBytes(32).toString('hex'), production = process.env.NODE_ENV === 'production', origin = process.env.APP_ORIGIN } = {}) {
+export function createApp({ storage = createStorage(), password = UPLOAD_PASSWORD, adminUsername = ADMIN_USERNAME, adminPassword = ADMIN_PASSWORD, secret = process.env.SESSION_SECRET || randomBytes(32).toString('hex'), production = process.env.NODE_ENV === 'production', origin = process.env.APP_ORIGIN } = {}) {
   const attempts = new Map();
   const sign = value => createHmac('sha256', secret).update(value).digest('hex');
-  function authenticated(req) {
-    const cookie = req.headers.cookie?.split(';').map(s => s.trim()).find(s => s.startsWith('sentence_session='))?.slice(17);
+  function authenticated(req, admin = false) {
+    const name = admin ? 'sentence_admin' : 'sentence_session';
+    const cookie = req.headers.cookie?.split(';').map(s => s.trim()).find(s => s.startsWith(`${name}=`))?.slice(name.length + 1);
     if (!cookie) return false;
-    const [expires, signature] = cookie.split('.');
-    return /^\d+$/.test(expires) && Number(expires) > Date.now() && typeof signature === 'string' && timingSafeEqual(hash(signature), hash(sign(expires)));
+    const [expires, signature, extra] = cookie.split('.');
+    return !extra && /^\d+$/.test(expires) && Number(expires) > Date.now() && typeof signature === 'string' && timingSafeEqual(hash(signature), hash(sign(admin ? `admin:${expires}` : expires)));
   }
   function json(res, status, data, headers = {}) {
     res.writeHead(status, { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store', ...headers });
@@ -30,7 +31,7 @@ export function createApp({ storage = createStorage(), password = UPLOAD_PASSWOR
     let size = 0;
     for await (const chunk of req) {
       size += chunk.length;
-      if (size > limit) throw new HttpError(413, 'The upload is too large. Choose an image up to 8 MB.');
+      if (size > limit) throw new HttpError(413, 'The upload is too large. Choose an image up to 4 MB.');
       parts.push(chunk);
     }
     return Buffer.concat(parts);
@@ -41,30 +42,43 @@ export function createApp({ storage = createStorage(), password = UPLOAD_PASSWOR
     res.setHeader('Content-Security-Policy', "default-src 'self'; img-src 'self' https: blob:; script-src 'self'; style-src 'self'; connect-src 'self'; form-action 'self'; frame-ancestors 'none'; base-uri 'self'");
     try {
       const url = new URL(req.url, 'http://localhost');
-      if (req.method === 'POST') {
+      if (['POST', 'DELETE'].includes(req.method)) {
         const expected = origin || `${production ? 'https' : 'http'}://${req.headers.host}`;
         if ((req.headers.origin && req.headers.origin !== expected) || req.headers['sec-fetch-site'] === 'cross-site') throw new HttpError(403, 'Please submit from this website.');
       }
-      if (url.pathname === '/api/session' && req.method === 'GET') return json(res, 200, { authenticated: authenticated(req) });
-      if (url.pathname === '/api/session' && req.method === 'POST') {
+      const admin = url.pathname === '/api/admin-session';
+      const sessionPath = admin || url.pathname === '/api/session';
+      if (sessionPath && req.method === 'GET') return json(res, 200, { authenticated: authenticated(req, admin) });
+      if (admin && req.method === 'DELETE') return json(res, 200, { authenticated: false }, { 'Set-Cookie': `sentence_admin=; Path=/; HttpOnly; SameSite=Strict; Max-Age=0${production ? '; Secure' : ''}` });
+      if (sessionPath && req.method === 'POST') {
         if (!(req.headers['content-type'] || '').startsWith('application/json')) throw new HttpError(415, 'Expected a password request.');
         const now = Date.now();
         for (const [key, value] of attempts) if (value.expires < now) attempts.delete(key);
         // Use the socket address, not a spoofable forwarding header.
-        const ip = req.socket.remoteAddress;
+        const ip = `${admin ? 'admin' : 'upload'}:${req.socket.remoteAddress}`;
         const attempt = attempts.get(ip) || { count: 0, expires: now + 15 * 60 * 1000 };
         if (attempt.count >= 10) return json(res, 429, { error: 'Too many attempts. Please try again in 15 minutes.' }, { 'Retry-After': '900' });
         let data;
         try { data = JSON.parse((await body(req, 1024)).toString()); } catch (error) { if (error.status) throw error; throw new HttpError(400, 'Invalid password request.'); }
         const supplied = typeof data?.password === 'string' ? data.password : '';
-        if (!supplied || !timingSafeEqual(hash(supplied), hash(password))) {
+        const passwordMatches = supplied && timingSafeEqual(hash(supplied), hash(admin ? adminPassword : password));
+        const usernameMatches = !admin || (typeof data?.username === 'string' && timingSafeEqual(hash(data.username), hash(adminUsername)));
+        if (!passwordMatches || !usernameMatches) {
           attempt.count += 1;
           attempts.set(ip, attempt);
-          throw new HttpError(401, 'That password is not correct. Please try again.');
+          throw new HttpError(401, admin ? 'Incorrect username or password. Please try again.' : 'That password is not correct. Please try again.');
         }
         attempts.delete(ip);
         const expires = String(now + 2 * 60 * 60 * 1000);
-        return json(res, 200, { authenticated: true }, { 'Set-Cookie': `sentence_session=${expires}.${sign(expires)}; Path=/; HttpOnly; SameSite=Strict; Max-Age=7200${production ? '; Secure' : ''}` });
+        return json(res, 200, { authenticated: true }, { 'Set-Cookie': `${admin ? 'sentence_admin' : 'sentence_session'}=${expires}.${sign(admin ? `admin:${expires}` : expires)}; Path=/; HttpOnly; SameSite=Strict; Max-Age=7200${production ? '; Secure' : ''}` });
+      }
+      if (url.pathname === '/api/admin-entries' && req.method === 'GET') {
+        if (!authenticated(req, true)) throw new HttpError(401, 'Please log in as an admin to view submissions.');
+        if (!storage.configured) throw new HttpError(503, 'Submission storage is not configured yet.');
+        const offset = Number(url.searchParams.get('offset') || 0);
+        if (!Number.isSafeInteger(offset) || offset < 0) throw new HttpError(400, 'Invalid submissions offset.');
+        const entries = await storage.listAdmin(offset);
+        return json(res, 200, { entries, nextOffset: entries.length === 50 ? offset + 50 : null });
       }
       if (url.pathname === '/api/entries' && req.method === 'GET') {
         const offset = Number(url.searchParams.get('offset') || 0);

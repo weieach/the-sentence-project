@@ -4,14 +4,15 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="description" content="The Sentence Project: a community archive of personal writing and visual expression.">
-  <title>The Sentence Project</title>
+  <title>Admin — The Sentence Project</title>
   <link rel="icon" href="/assets/arrow.png" type="image/png">
   <link rel="stylesheet" href="/styles.css">
   <script src="/vendor/gsap.min.js" defer></script>
   <script src="/vendor/ScrollTrigger.min.js" defer></script>
   <script src="/app.js" defer></script>
+  <meta name="robots" content="noindex, nofollow">
 </head>
-<body data-page="home">
+<body data-page="admin">
 <header class="site-header">
   <a class="brand" href="/" aria-label="The Sentence Project home">
     <span class="brand-symbol" aria-hidden="true"><img src="/assets/arrow.png" alt=""></span>
@@ -19,27 +20,18 @@
     <p class="tagline">stories and sometimes pictures</p>
   </a>
   <nav class="site-nav" aria-label="Main navigation">
-    <a href="/" aria-current="page">gallery</a>
+    <a href="/">gallery</a>
     <a href="/about.html">about</a>
-    <a href="/upload.html" data-upload-link>upload</a>
+    <button class="admin-logout" type="button" data-admin-logout hidden>log out</button>
   </nav>
 </header>
-<main class="content" aria-label="Gallery">
-  <div class="gallery" id="gallery"></div>
-  <div class="gallery-invitation" hidden>
-    <p>Part of a Sentence Project session?</p>
-    <button class="action-button" type="button" data-upload-link>upload a sentence</button>
-  </div>
-  <p class="status gallery-status" id="gallery-status" role="status">Loading the gallery…</p>
-  <noscript>Enable JavaScript to view the gallery.</noscript>
+<main class="content admin-main" aria-label="All submissions">
+  <h1>All submissions <span id="admin-entry-count"></span></h1>
+  <p id="admin-entries-status" class="status" role="status">Loading submissions...</p>
+  <button class="action-button" type="button" data-admin-login id="admin-gate" hidden>Admin login</button>
+  <div id="admin-entries" class="admin-entries"></div>
+  <noscript>Enable JavaScript to view submissions.</noscript>
 </main>
-<footer class="contact-section" id="contact">
-  <p class="contact-intro">If you are interested in participating in or convening a Sentence Project session, please reach out to Heather Corcoran, <a href="mailto:contact@sentenceproject.org">contact@sentenceproject.org</a>.</p>
-  <div class="about-copy contact-bio">
-    <p>Heather Corcoran is a graphic designer and a writer whose work explores place and belonging. Words—as they are written and visualized—form the underlying language for editions of hand-made books, as well as posters and maps. Corcoran’s essays examine isolation and connection through the lens of the visual landscape. She integrates personal and collective history with accumulations of hand- and machine-rendered text, numerical data, color, and image.</p>
-    <p>Corcoran is a professor of design at Washington University in St. Louis.</p>
-  </div>
-</footer>
 <dialog class="dialog" id="password-dialog" aria-labelledby="password-title">
   <button type="button" class="dialog-close" aria-label="Close password dialog">×</button>
   <form id="password-form">

@@ -7,6 +7,8 @@
   <title>Upload — The Sentence Project</title>
   <link rel="icon" href="/assets/arrow.png" type="image/png">
   <link rel="stylesheet" href="/styles.css">
+  <script src="/vendor/gsap.min.js" defer></script>
+  <script src="/vendor/ScrollTrigger.min.js" defer></script>
   <script src="/app.js" defer></script>
 </head>
 <body data-page="upload">
@@ -18,45 +20,59 @@
   </a>
   <nav class="site-nav" aria-label="Main navigation">
     <a href="/">gallery</a>
-    <a href="/about.html">about + contact</a>
+    <a href="/about.html">about</a>
     <a href="/upload.html" data-upload-link aria-current="page">upload</a>
+    <a class="nav-action" href="/" hidden>cancel</a>
+    <button class="nav-action" type="submit" form="upload-form" data-submit-upload hidden>submit</button>
   </nav>
 </header>
 <main class="content">
   <p id="upload-gate" class="status">Enter the session password using the <a href="/upload.html" data-upload-link>upload</a> link to contribute.</p>
   <form class="upload-form" id="upload-form" hidden>
     <fieldset class="form-section">
-      <legend>background</legend>
-      <div class="form-row"><label for="name">1. Your name</label><input id="name" name="name" autocomplete="name" required maxlength="120"></div>
-      <div class="form-row"><label for="email">2. Email address</label><input id="email" name="email" type="email" autocomplete="email" required maxlength="254"></div>
-      <div class="form-row"><label for="session">3. Sentence Project session attended</label><input id="session" name="session" required maxlength="200"></div>
+      <div class="form-row"><label for="name">Your name</label><input id="name" name="name" autocomplete="name" required maxlength="120" placeholder="Enter your name…"></div>
+      <div class="form-row"><label for="email">Email address</label><input id="email" name="email" type="email" autocomplete="email" required maxlength="254" placeholder="you@example.com"></div>
+      <div class="form-row"><label for="session">Sentence Project session attended</label><input id="session" name="session" required maxlength="200" placeholder="Enter session name..."></div>
+      <div class="form-row long-row"><label for="sentence">If you’d like to share a particular sentence from today’s writing, please type it here</label><textarea id="sentence" name="sentence" rows="2" maxlength="2000" placeholder="Share a sentence from today’s writing…"></textarea></div>
     </fieldset>
-    <fieldset class="form-section">
-      <legend>contribute</legend>
-      <div class="form-row"><label for="photo">4. Upload photo</label><div><input id="photo" name="photo" type="file" accept="image/jpeg,image/png,image/webp" required aria-describedby="photo-note"><p class="field-note" id="photo-note">JPG, PNG, or WebP. Up to 8 MB.</p><img id="upload-preview" class="upload-preview" alt="Your selected photo" hidden></div></div>
-      <div class="form-row"><label for="caption">5. Photo caption</label><input id="caption" name="caption" required maxlength="500"></div>
-      <fieldset class="choice-row"><legend>6. Would you like your name included with your photo caption?</legend><div class="choices"><label><input type="radio" name="includeName" value="yes" required> Yes</label><label><input type="radio" name="includeName" value="no" required> No</label></div></fieldset>
-      <div class="form-row long-row"><label for="sentence">7. If you’d like to share a particular sentence from today’s writing, please type it here</label><textarea id="sentence" name="sentence" rows="2" maxlength="2000"></textarea></div>
+    <hr class="section-divider">
+    <fieldset class="form-section contribute-section">
+      <div class="contribute-col">
+        <div class="form-row"><label class="split-label" for="photo">Upload photo<span class="field-note" id="photo-note">(JPG, PNG, or WebP. Up to 4 MB.)</span></label><div class="photo-row"><button class="file-picker" type="button">Choose file</button><input id="photo" class="photo-input" name="photo" type="file" accept="image/jpeg,image/png,image/webp" required><p class="file-name" id="photo-name">No file chosen</p><img id="upload-preview" class="upload-preview" alt="Your selected photo" hidden></div></div>
+        <div class="form-row"><label for="caption">Photo caption</label><input id="caption" name="caption" required maxlength="500" placeholder="A few words about your photo…"></div>
+      </div>
+      <div class="contribute-col">
+        <fieldset class="choice-row"><legend>Would you like your name included with your photo caption?</legend><div class="choices"><label><input type="radio" name="includeName" value="yes" required> Yes</label><label><input type="radio" name="includeName" value="no" required> No</label></div></fieldset>
+      </div>
     </fieldset>
+    <hr class="section-divider">
     <fieldset class="form-section">
-      <legend>about you</legend>
-      <div class="form-row"><label for="hometown">8. Where are you from?</label><input id="hometown" name="hometown" autocomplete="address-level2" maxlength="200"></div>
-      <div class="form-row long-row"><label for="whyWrite">9. Why write?</label><textarea id="whyWrite" name="whyWrite" rows="3" maxlength="4000" aria-describedby="word-count"></textarea><p class="field-note" id="word-count">0 / 50 words</p></div>
+      <div class="form-row"><label for="hometown">Where are you from?</label><input id="hometown" name="hometown" autocomplete="address-level2" maxlength="200" placeholder="St. Louis, MO"></div>
+      <div class="form-row long-row"><div class="split-label"><label for="whyWrite">Why write?</label><p class="field-note" id="word-count">0 / 50 words</p></div><textarea id="whyWrite" name="whyWrite" rows="3" maxlength="4000" aria-describedby="word-count" placeholder="I write because…"></textarea></div>
     </fieldset>
     <p class="status" id="upload-status" role="status"></p>
-    <button class="action-button" type="submit">Submit</button>
   </form>
   <noscript>Enable JavaScript to submit a contribution.</noscript>
 </main>
 <dialog class="dialog" id="password-dialog" aria-labelledby="password-title">
   <button type="button" class="dialog-close" aria-label="Close password dialog">×</button>
   <form id="password-form">
-    <h2 id="password-title">Contribute</h2>
+    <h2 id="password-title">Before you proceed...</h2>
     <p>Enter your session password to upload.</p>
-    <label for="password">Password</label>
-    <input id="password" name="password" type="password" autocomplete="current-password" required maxlength="200">
+    <input id="password" name="password" type="password" autocomplete="current-password" required maxlength="200" aria-label="Password" placeholder="Enter your session password…">
     <p id="password-status" class="status error" role="alert"></p>
     <button class="action-button" type="submit">Continue</button>
+    <button class="action-button secondary-button" type="button" data-admin-login>Admin login</button>
+  </form>
+</dialog>
+<dialog class="dialog" id="admin-dialog" aria-labelledby="admin-title">
+  <button type="button" class="dialog-close" aria-label="Close admin login dialog">×</button>
+  <form id="admin-login-form">
+    <h2 id="admin-title">Admin login</h2>
+    <div class="form-row"><label for="admin-username">Username</label><input id="admin-username" name="username" autocomplete="username" required maxlength="200" placeholder="Enter your username..."></div>
+    <div class="form-row"><label for="admin-password">Password</label><input id="admin-password" name="password" type="password" autocomplete="current-password" required maxlength="200" placeholder="Enter your password..."></div>
+    <p id="admin-login-status" class="status error" role="alert"></p>
+    <button class="action-button" type="submit">Log in</button>
   </form>
 </dialog>
 </body>

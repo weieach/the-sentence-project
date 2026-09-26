@@ -7,6 +7,8 @@
   <title>About — The Sentence Project</title>
   <link rel="icon" href="/assets/arrow.png" type="image/png">
   <link rel="stylesheet" href="/styles.css">
+  <script src="/vendor/gsap.min.js" defer></script>
+  <script src="/vendor/ScrollTrigger.min.js" defer></script>
   <script src="/app.js" defer></script>
 </head>
 <body data-page="about">
@@ -14,41 +16,53 @@
   <a class="brand" href="/" aria-label="The Sentence Project home">
     <span class="brand-symbol" aria-hidden="true"><img src="/assets/arrow.png" alt=""></span>
     <span class="brand-name">Sentence<span>Project</span></span>
-    
+    <p class="tagline">stories and sometimes pictures</p>
   </a>
   <nav class="site-nav" aria-label="Main navigation">
     <a href="/">gallery</a>
-    <a href="/about.html" aria-current="page">about + contact</a>
+    <a href="/about.html" aria-current="page">about</a>
     <a href="/upload.html" data-upload-link>upload</a>
   </nav>
 </header>
 <main>
   <section class="content about-grid" aria-label="About The Sentence Project">
     <p class="about-intro">The Sentence Project is about personal writing and visual expression. Always there is the hope that the sentences we draft will reveal thoughts hovering beneath the surface, bringing form to unexpected ideas. Writing is an individual act, often a difficult one. But even a single phrase can spark something, if only we can get to it. When writing in a community is possible, new ideas emerge, sometimes suddenly.</p>
+    <div class="about-columns">
     <div class="about-copy"><p>The Sentence Project is rooted in community writing sessions. People assemble based on common interests or at random. Handcrafted journals are provided. We write (and sketch) in response to a set of prompts designed to be simultaneously pointed and open. There is some conversation about the writing and an invitation to read parts of it aloud. As the session wraps up, writers are asked to contribute a piece of something that they generated—a sentence, a sketch, a swatch, anything—to the online archive. The journals stay with the writers, hopefully seeding future work.</p></div>
     <div class="about-copy">
       <p>Writers can be any age, gathered from anywhere. They might be local citizens linked by a common social interest, such as healthy living or shared data about their city. Maybe they’re together at an art fair. Or there could be a class of college students pursuing writing or design.</p>
       <p>Participants can expect that writing in a community will have benefit for all of their creative work. Prompts are designed to help everyone balance personal stories and other material of interest.</p>
       <p><em>Contributions become part of the digital archive housed at sentenceproject.org.</em></p>
     </div>
-  </section>
-  <section class="contact-section" id="contact" aria-label="Contact">
-    <p class="contact-intro">If you are interested in participating in or convening a Sentence Project session, please reach out to Heather Corcoran, <a href="mailto:contact@sentenceproject.org">contact@sentenceproject.org</a>.</p>
-    <div class="about-copy contact-bio">
-      <p>Heather Corcoran is a graphic designer and a writer whose work explores place and belonging. Words—as they are written and visualized—form the underlying language for editions of hand-made books, as well as posters and maps. Corcoran’s essays examine isolation and connection through the lens of the visual landscape. She integrates personal and collective history with accumulations of hand- and machine-rendered text, numerical data, color, and image.</p>
-      <p>Corcoran is a professor of design at Washington University in St. Louis.</p>
     </div>
   </section>
 </main>
+<footer class="contact-section" id="contact">
+  <p class="contact-intro">If you are interested in participating in or convening a Sentence Project session, please reach out to Heather Corcoran, <a href="mailto:contact@sentenceproject.org">contact@sentenceproject.org</a>.</p>
+  <div class="about-copy contact-bio">
+    <p>Heather Corcoran is a graphic designer and a writer whose work explores place and belonging. Words—as they are written and visualized—form the underlying language for editions of hand-made books, as well as posters and maps. Corcoran’s essays examine isolation and connection through the lens of the visual landscape. She integrates personal and collective history with accumulations of hand- and machine-rendered text, numerical data, color, and image.</p>
+    <p>Corcoran is a professor of design at Washington University in St. Louis.</p>
+  </div>
+</footer>
 <dialog class="dialog" id="password-dialog" aria-labelledby="password-title">
   <button type="button" class="dialog-close" aria-label="Close password dialog">×</button>
   <form id="password-form">
-    <h2 id="password-title">Contribute</h2>
+    <h2 id="password-title">Before you proceed...</h2>
     <p>Enter your session password to upload.</p>
-    <label for="password">Password</label>
-    <input id="password" name="password" type="password" autocomplete="current-password" required maxlength="200">
+    <input id="password" name="password" type="password" autocomplete="current-password" required maxlength="200" aria-label="Password" placeholder="Password">
     <p id="password-status" class="status error" role="alert"></p>
     <button class="action-button" type="submit">Continue</button>
+    <button class="action-button secondary-button" type="button" data-admin-login>Admin login</button>
+  </form>
+</dialog>
+<dialog class="dialog" id="admin-dialog" aria-labelledby="admin-title">
+  <button type="button" class="dialog-close" aria-label="Close admin login dialog">×</button>
+  <form id="admin-login-form">
+    <h2 id="admin-title">Admin login</h2>
+    <div class="form-row"><label for="admin-username">Username</label><input id="admin-username" name="username" autocomplete="username" required maxlength="200" placeholder="Enter your username..."></div>
+    <div class="form-row"><label for="admin-password">Password</label><input id="admin-password" name="password" type="password" autocomplete="current-password" required maxlength="200" placeholder="Enter your password..."></div>
+    <p id="admin-login-status" class="status error" role="alert"></p>
+    <button class="action-button" type="submit">Log in</button>
   </form>
 </dialog>
 </body>

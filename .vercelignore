@@ -1,0 +1,12 @@
+.git
+.env
+.env.*
+.openai
+.sites-runtime
+reference
+tmp
+dist
+tests
+scripts
+README.md
+supabase
