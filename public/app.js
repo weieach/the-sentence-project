@@ -54,8 +54,9 @@ if (brand && window.gsap && window.ScrollTrigger && !window.matchMedia('(prefers
 if (header) {
   const syncHeaderOffset = () => {
     // Reserve the expanded header's space so shrinking it cannot move the scroll trigger.
-    const expandedHeight = header.getBoundingClientRect().height - (parseFloat(brand?.style.marginBottom) || 0);
-    document.body.style.setProperty('--current-header-height', `${header.getBoundingClientRect().height}px`);
+    const currentHeight = header.offsetHeight;
+    const expandedHeight = currentHeight - (parseFloat(brand?.style.marginBottom) || 0);
+    document.body.style.setProperty('--current-header-height', `${currentHeight}px`);
     document.body.style.setProperty('--header-height', `${expandedHeight}px`);
     document.body.style.paddingTop = `${expandedHeight}px`;
   };

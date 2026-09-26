@@ -91,8 +91,11 @@ button:disabled {
   /* Equal side margins. The nav column starts on the about page’s second column, which is the midpoint when those margins match. */
   grid-template-columns: var(--page-margin) calc(50% - var(--page-margin)) minmax(0, 1fr) var(--page-margin);
   align-items: start;
+  align-content: start;
   column-gap: 0;
-  height: fit-content;
+  /* auto shrink-wraps. fit-content on a fixed box stretches to the viewport in mobile Safari. */
+  height: auto;
+  bottom: auto;
   padding: 2.5rem 0 1.5rem;
   --header-line: 0;
   border-bottom: 1px solid rgb(0 0 0 / var(--header-line));
@@ -114,11 +117,14 @@ button:disabled {
   gap: .85rem;
   margin-left: 3.2rem;
   height: 1.9rem;
+  min-height: 0;
 }
 
 .brand-symbol img {
   width: 6.6rem;
   height: auto;
+  min-height: 0;
+  flex: 0 0 auto;
 }
 
 .brand-symbol::after {
@@ -919,8 +925,13 @@ body[data-page="admin"] {
 
   .brand {
     display: grid;
-    grid-template-columns: 1fr max-content 1fr;
+    /* Definite width so the 1fr tracks cannot cycle with max-content and stretch the header. */
+    width: 100%;
     max-width: 100%;
+    min-width: 0;
+    grid-template-columns: minmax(0, 1fr) max-content minmax(0, 1fr);
+    justify-self: stretch;
+    align-self: start;
     transform-origin: center top;
   }
 
@@ -951,6 +962,7 @@ body[data-page="admin"] {
 
   .brand-symbol {
     height: 1.6rem;
+    min-height: 0;
     margin-left: 2.8rem;
   }
 
