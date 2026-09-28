@@ -97,7 +97,8 @@ button:disabled {
   height: auto;
   bottom: auto;
   padding: 2.5rem 0 1.5rem;
-  border-bottom: none;
+  --header-line: 0;
+  border-bottom: 1px solid rgb(from #7E7F59 r g b / var(--header-line));
 }
 
 .brand {
