@@ -19,8 +19,9 @@ if (brand && window.gsap && window.ScrollTrigger && !window.matchMedia('(prefers
       invalidateOnRefresh: true,
     },
   });
+  const mobileHeader = () => window.matchMedia('(max-width: 600px)').matches;
   logoAnimation.fromTo(brand, { scale: 1 }, {
-    scale: () => window.matchMedia('(max-width: 600px)').matches ? 0.9 : 0.8,
+    scale: () => mobileHeader() ? 0.7 : 0.8,
     duration: 0.45,
     ease: 'power2.inOut',
     onUpdate: fitHeaderToLogo,
@@ -29,8 +30,19 @@ if (brand && window.gsap && window.ScrollTrigger && !window.matchMedia('(prefers
   if (tagline) {
     logoAnimation.fromTo(tagline, { autoAlpha: 1 }, {
       autoAlpha: 0,
+      height: () => mobileHeader() ? 0 : tagline.offsetHeight,
+      marginTop: () => mobileHeader() ? 0 : parseFloat(getComputedStyle(tagline).marginTop),
+      overflow: 'hidden',
       duration: 0.3,
       ease: 'power2.out',
+      onUpdate: fitHeaderToLogo,
+    }, 0);
+  }
+  if (header) {
+    logoAnimation.fromTo(header, { rowGap: '1.75rem' }, {
+      rowGap: () => mobileHeader() ? '1rem' : '1.75rem',
+      duration: 0.45,
+      ease: 'power2.inOut',
     }, 0);
   }
   if (header) {

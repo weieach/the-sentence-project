@@ -25,7 +25,7 @@
 body {
   margin: 0;
   min-width: 280px;
-  padding-top: 13.5rem;
+  padding-top: 12.5rem;
 }
 
 body[data-page="home"],
@@ -96,7 +96,7 @@ button:disabled {
   /* auto shrink-wraps. fit-content on a fixed box stretches to the viewport in mobile Safari. */
   height: auto;
   bottom: auto;
-  padding: 2.5rem 0 1.5rem;
+  padding: 1.5rem 0 1.5rem;
   --header-line: 0;
   border-bottom: 1px solid rgb(from #7E7F59 r g b / var(--header-line));
 }
@@ -873,7 +873,7 @@ body[data-page="admin"] {
 
 @media (max-width: 1000px) {
   body {
-    padding-top: 12.25rem;
+    padding-top: 11.25rem;
   }
 
   .site-header {
@@ -902,16 +902,16 @@ body[data-page="admin"] {
 
 @media (max-width: 600px) {
   body {
-    padding-top: 15.5rem;
+    padding-top: 15.25rem;
   }
 
   .site-header {
     margin: 0;
-    padding: 2.5rem var(--page-margin) .75rem;
+    padding: 1.5rem var(--page-margin) .75rem;
     min-height: 0;
     grid-template-columns: minmax(0, 1fr);
     justify-items: center;
-    gap: 1rem;
+    gap: 1.75rem;
   }
 
   main {
