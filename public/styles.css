@@ -97,8 +97,7 @@ button:disabled {
   height: auto;
   bottom: auto;
   padding: 2.5rem 0 1.5rem;
-  --header-line: 0;
-  border-bottom: 1px solid rgb(0 0 0 / var(--header-line));
+  border-bottom: none;
 }
 
 .brand {
@@ -902,16 +901,16 @@ body[data-page="admin"] {
 
 @media (max-width: 600px) {
   body {
-    padding-top: 17.25rem;
+    padding-top: 15.5rem;
   }
 
   .site-header {
     margin: 0;
-    padding: 2.5rem var(--page-margin) 1.5rem;
+    padding: 2.5rem var(--page-margin) .75rem;
     min-height: 0;
     grid-template-columns: minmax(0, 1fr);
     justify-items: center;
-    gap: 2rem;
+    gap: 1rem;
   }
 
   main {
