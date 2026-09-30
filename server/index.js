@@ -5,10 +5,10 @@ import { fileURLToPath } from 'node:url';
 import { createHash, createHmac, randomBytes, randomUUID, timingSafeEqual } from 'node:crypto';
 import { UPLOAD_PASSWORD, MAX_IMAGE_BYTES, ADMIN_USERNAME, ADMIN_PASSWORD } from './config.js';
 import { createStorage } from './storage.js';
-import { validateSubmission, checkImage, HttpError } from './validation.js';
+import { validateSubmission, checkImage, HttpError, validateEntryId } from './validation.js';
 
 const root = fileURLToPath(new URL('../public/', import.meta.url));
-const mimeTypes = { '.html': 'text/html; charset=utf-8', '.css': 'text/css; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.png': 'image/png', '.jpg': 'image/jpeg' };
+const mimeTypes = { '.html': 'text/html; charset=utf-8', '.css': 'text/css; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.png': 'image/png', '.jpg': 'image/jpeg', '.otf': 'font/otf' };
 const previewCaptions = ['caption language', 'calligraphic greeting', 'new idea', 'calligraphic greeting', 'new idea', 'calligraphic greeting'];
 const hash = value => createHash('sha256').update(value).digest();
 
@@ -42,7 +42,7 @@ export function createApp({ storage = createStorage(), password = UPLOAD_PASSWOR
     res.setHeader('Content-Security-Policy', "default-src 'self'; img-src 'self' https: blob:; script-src 'self'; style-src 'self'; connect-src 'self'; form-action 'self'; frame-ancestors 'none'; base-uri 'self'");
     try {
       const url = new URL(req.url, 'http://localhost');
-      if (['POST', 'DELETE'].includes(req.method)) {
+      if (['POST', 'PATCH', 'DELETE'].includes(req.method)) {
         const expected = origin || `${production ? 'https' : 'http'}://${req.headers.host}`;
         if ((req.headers.origin && req.headers.origin !== expected) || req.headers['sec-fetch-site'] === 'cross-site') throw new HttpError(403, 'Please submit from this website.');
       }
@@ -72,9 +72,19 @@ export function createApp({ storage = createStorage(), password = UPLOAD_PASSWOR
         const expires = String(now + 2 * 60 * 60 * 1000);
         return json(res, 200, { authenticated: true }, { 'Set-Cookie': `${admin ? 'sentence_admin' : 'sentence_session'}=${expires}.${sign(admin ? `admin:${expires}` : expires)}; Path=/; HttpOnly; SameSite=Strict; Max-Age=7200${production ? '; Secure' : ''}` });
       }
-      if (url.pathname === '/api/admin-entries' && req.method === 'GET') {
+      if (url.pathname === '/api/admin-entries' && ['GET', 'PATCH', 'DELETE'].includes(req.method)) {
         if (!authenticated(req, true)) throw new HttpError(401, 'Please log in as an admin to view submissions.');
         if (!storage.configured) throw new HttpError(503, 'Submission storage is not configured yet.');
+        if (req.method !== 'GET') {
+          const id = validateEntryId(url.searchParams.get('id'));
+          if (req.method === 'DELETE') return json(res, 200, await storage.remove(id));
+          if (!(req.headers['content-type'] || '').startsWith('application/json')) throw new HttpError(415, 'Expected a visibility request.');
+          let data;
+          try { data = JSON.parse((await body(req, 1024)).toString()); }
+          catch (error) { if (error.status) throw error; throw new HttpError(400, 'Invalid visibility request.'); }
+          if (typeof data?.hidden !== 'boolean') throw new HttpError(400, 'Choose whether to hide this submission.');
+          return json(res, 200, await storage.setHidden(id, data.hidden));
+        }
         const offset = Number(url.searchParams.get('offset') || 0);
         if (!Number.isSafeInteger(offset) || offset < 0) throw new HttpError(400, 'Invalid submissions offset.');
         const entries = await storage.listAdmin(offset);

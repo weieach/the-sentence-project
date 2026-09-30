@@ -1,5 +1,5 @@
 import { createStorage } from './storage.js';
-import { validateSubmission, checkImage, HttpError } from './validation.js';
+import { validateSubmission, checkImage, HttpError, validateEntryId } from './validation.js';
 import { MAX_IMAGE_BYTES, ADMIN_USERNAME, ADMIN_PASSWORD } from './config.js';
 
 // The build embeds only public/ here. Secrets are supplied by the hosting runtime.
@@ -67,7 +67,7 @@ export function createWorker({ assets = bundledAssets, storageFactory = createSt
         if (!env.SUPABASE_URL || !(env.SUPABASE_SECRET_KEY || env.SUPABASE_SERVICE_ROLE_KEY) || !env.SESSION_SECRET || !env.UPLOAD_PASSWORD) {
           throw new HttpError(503, 'The site is not ready to accept submissions.');
         }
-        if (['POST', 'DELETE'].includes(request.method) && ((request.headers.get('origin') && request.headers.get('origin') !== (env.APP_ORIGIN || url.origin)) || request.headers.get('sec-fetch-site') === 'cross-site')) {
+        if (['POST', 'PATCH', 'DELETE'].includes(request.method) && ((request.headers.get('origin') && request.headers.get('origin') !== (env.APP_ORIGIN || url.origin)) || request.headers.get('sec-fetch-site') === 'cross-site')) {
           throw new HttpError(403, 'Please submit from this website.');
         }
         const admin = path === '/api/admin-session';
@@ -96,8 +96,19 @@ export function createWorker({ assets = bundledAssets, storageFactory = createSt
           return json(200, { authenticated: true }, { 'Set-Cookie': `${admin ? 'sentence_admin' : 'sentence_session'}=${expires}.${await sign(admin ? `admin:${expires}` : expires, env.SESSION_SECRET)}; Path=/; HttpOnly; SameSite=Strict; Max-Age=7200; Secure` });
         }
         const storage = storageFactory({ url: env.SUPABASE_URL, key: env.SUPABASE_SECRET_KEY || env.SUPABASE_SERVICE_ROLE_KEY });
-        if (path === '/api/admin-entries' && request.method === 'GET') {
+        if (path === '/api/admin-entries' && ['GET', 'PATCH', 'DELETE'].includes(request.method)) {
           if (!await hasSession(request, env.SESSION_SECRET, true)) throw new HttpError(401, 'Please log in as an admin to view submissions.');
+          if (request.method !== 'GET') {
+            const id = validateEntryId(url.searchParams.get('id'));
+            if (request.method === 'DELETE') return json(200, await storage.remove(id));
+            if (!request.headers.get('content-type')?.startsWith('application/json')) throw new HttpError(415, 'Expected a visibility request.');
+            const bytes = await limitedBody(request, 1024);
+            let data;
+            try { data = JSON.parse(new TextDecoder().decode(bytes)); }
+            catch { throw new HttpError(400, 'Invalid visibility request.'); }
+            if (typeof data?.hidden !== 'boolean') throw new HttpError(400, 'Choose whether to hide this submission.');
+            return json(200, await storage.setHidden(id, data.hidden));
+          }
           const offset = Number(url.searchParams.get('offset') || 0);
           if (!Number.isSafeInteger(offset) || offset < 0) throw new HttpError(400, 'Invalid submissions offset.');
           const entries = await storage.listAdmin(offset);

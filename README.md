@@ -36,7 +36,11 @@ Open **upload**, then choose **Admin login** below Continue. Log in with:
 
 The defaults are saved in **`server/config.js`**, which is never served to browsers. Override them with `ADMIN_USERNAME` and `ADMIN_PASSWORD` in `.env` or the hosting environment. Redeploy after changing hosted values.
 
-Successful login opens **`/admin.html`**. Each submission has an image and caption on the left and all other submitted answers on the right, with dividers between entries. On mobile, the image and answers stack. The page loads all records in batches of 50, including names when the contributor chose not to display them publicly. It also shows submission time, year, and entry ID. No database migration is needed.
+Successful login opens **`/admin.html`**. Each submission has an image and caption on the left and all other submitted answers on the right, with dividers between entries. On mobile, the image and answers stack. The page loads all records in batches of 50, including names when the contributor chose not to display them publicly. It also shows submission time, year, and entry ID.
+
+For an existing database, run **`supabase/migrations/20260930_admin_visibility.sql`** in the Supabase SQL Editor before using these controls. Fresh databases get the same changes from `supabase/schema.sql`.
+
+Each submission has **Hide** and **Delete** buttons. Hide removes it from the public gallery while keeping all its information in admin; **Show** restores it. Hidden images retain their existing public storage URL. Delete asks for confirmation, then permanently removes that submission and its image. If image cleanup fails after the record is deleted, the page reports that the remaining image needs to be removed in Supabase. The total count updates after deletion.
 
 Admin data comes from the protected `/api/admin-entries` endpoint. The public gallery still excludes private fields. Admin login uses its own signed HTTP-only cookie, valid for two hours, separate from upload access; an upload cookie cannot grant admin access. Use **log out** on the admin page to clear the admin cookie. Admin login attempts have the same per-instance in-memory limit as upload login.
 
@@ -70,7 +74,7 @@ The former ChatGPT URL now serves only HTTP 410 (Gone), and its runtime secrets 
 
 The nine form fields follow the supplied sketch. Name, email, session attended, image, caption, and the name-display choice are required; the remaining answers are optional. Images may be JPG, PNG, or WebP up to 4 MB. “Why write?” is limited to 50 words. The gallery returns only image URLs, captions, opted-in names, year, and record IDs; emails and other answers stay private in Supabase. Images themselves are public gallery content.
 
-Locally, missing Supabase credentials show labeled preview images from the PDF and disable writes. The hosted runtime requires configured storage and never substitutes preview entries for real submissions. The contact link goes to the about page's contact section, alongside the separate admin page. System fonts approximate the sketch's proprietary typefaces. The contact mailto link does not create an email mailbox.
+Locally, missing Supabase credentials show labeled preview images from the PDF and disable writes. The hosted runtime requires configured storage and never substitutes preview entries for real submissions. The contact link goes to the about page's contact section, alongside the separate admin page. Fonts are self-hosted from `public/fonts/`: Domaine Sans Text for navigation and body copy, Pitch Bold Italic for captions and the separate tagline, and Lyon Display for form questions and headings. These match the typefaces embedded in `reference/websiterough.pdf`. The supplied `logoforweb-2.png` is served unchanged as `public/assets/logo.png`; CSS hides its transparent margins. Source font files remain in `fonts/`. The contact mailto link does not create an email mailbox.
 
 ## Checks
 
@@ -78,4 +82,4 @@ Locally, missing Supabase credentials show labeled preview images from the PDF a
 npm test
 ```
 
-Tests cover admin authentication, role isolation, private submission access, pagination, logout, Node and hosted upload flows, password sessions, validation, origin checks, secret-key headers, private data handling, and cleanup after failed database inserts. Tests use isolated data. Supabase connectivity is checked separately without adding a fake gallery submission.
+Tests cover admin authentication, role isolation, private submission access, visibility changes, individual deletion, pagination, logout, Node and hosted upload flows, password sessions, validation, origin checks, secret-key headers, private data handling, and image cleanup. Tests use isolated data. Supabase connectivity is checked separately without adding a fake gallery submission.

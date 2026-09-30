@@ -39,13 +39,6 @@ if (brand && window.gsap && window.ScrollTrigger && !window.matchMedia('(prefers
     }, 0);
   }
   if (header) {
-    logoAnimation.fromTo(header, { rowGap: '1.75rem' }, {
-      rowGap: () => mobileHeader() ? '1rem' : '1.75rem',
-      duration: 0.45,
-      ease: 'power2.inOut',
-    }, 0);
-  }
-  if (header) {
     gsap.fromTo(header, { '--header-line': 0 }, {
       '--header-line': 0.3,
       ease: 'none',
@@ -158,6 +151,73 @@ adminLoginForm.addEventListener('submit', async event => {
   } finally { button.disabled = false; }
 });
 
+function confirmDelete() {
+  const confirmDialog = document.querySelector('#delete-dialog');
+  confirmDialog.returnValue = '';
+  return new Promise(resolve => {
+    confirmDialog.addEventListener('close', () => resolve(confirmDialog.returnValue === 'delete'), { once: true });
+    confirmDialog.showModal();
+  });
+}
+function updateAdminCount() {
+  document.querySelector('#admin-entry-count').textContent = `(${adminEntries.children.length})`;
+  adminEntries.querySelectorAll('.admin-entry-number').forEach((number, index) => { number.textContent = `${index + 1}.`; });
+}
+function addEntryActions(entry, article, details) {
+  const actions = document.createElement('div');
+  actions.className = 'entry-actions';
+  const toggle = document.createElement('button');
+  const remove = document.createElement('button');
+  for (const button of [toggle, remove]) {
+    button.type = 'button';
+    button.className = 'entry-action';
+  }
+  let hidden = entry.is_hidden;
+  toggle.textContent = hidden ? 'Show' : 'Hide';
+  remove.textContent = 'Delete';
+  const message = document.createElement('p');
+  message.className = 'status entry-action-status';
+  message.setAttribute('role', 'status');
+  message.textContent = hidden ? 'Hidden from gallery.' : '';
+  actions.append(toggle, remove);
+  details.append(actions, message);
+  const setBusy = busy => { toggle.disabled = busy; remove.disabled = busy; };
+  const reportError = async error => {
+    message.classList.add('error');
+    message.textContent = error.status ? error.message : 'Could not connect. Please try again.';
+    if (error.status === 401) await loadAdminEntries();
+  };
+  toggle.addEventListener('click', async () => {
+    setBusy(true);
+    message.classList.remove('error');
+    message.textContent = '';
+    try {
+      const result = await api(`/api/admin-entries?id=${encodeURIComponent(entry.id)}`, {
+        method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ hidden: !hidden }),
+      });
+      hidden = result.hidden;
+      toggle.textContent = hidden ? 'Show' : 'Hide';
+      message.textContent = hidden ? 'Hidden from gallery.' : 'Visible in gallery.';
+    } catch (error) { await reportError(error); }
+    finally { setBusy(false); }
+  });
+  remove.addEventListener('click', async () => {
+    if (!await confirmDelete()) return;
+    setBusy(true);
+    message.classList.remove('error');
+    message.textContent = '';
+    try {
+      const result = await api(`/api/admin-entries?id=${encodeURIComponent(entry.id)}`, { method: 'DELETE' });
+      article.remove();
+      updateAdminCount();
+      const status = document.querySelector('#admin-entries-status');
+      status.classList.toggle('error', Boolean(result.warning));
+      status.textContent = result.warning || (adminEntries.children.length ? 'Submission deleted.' : 'No submissions yet.');
+    } catch (error) { await reportError(error); }
+    finally { setBusy(false); }
+  });
+}
+
 async function loadAdminEntries() {
   const status = document.querySelector('#admin-entries-status');
   const gate = document.querySelector('#admin-gate');
@@ -205,7 +265,11 @@ async function loadAdminEntries() {
           answer.textContent = String(value);
           info.append(term, answer);
         }
-        article.append(figure, info);
+        const details = document.createElement('div');
+        details.className = 'admin-entry-details';
+        details.append(info);
+        addEntryActions(entry, article, details);
+        article.append(figure, details);
         adminEntries.append(article);
       }
       offset = result.nextOffset;
@@ -272,35 +336,59 @@ passwordForm.addEventListener('submit', async (event) => {
 async function loadGallery() {
   const gallery = document.querySelector('#gallery');
   const status = document.querySelector('#gallery-status');
+  const loading = gallery.querySelector('.gallery-loading');
+  const finishLoading = () => {
+    loading?.remove();
+    gallery.setAttribute('aria-busy', 'false');
+  };
   let offset = 0;
   try {
     let next;
     do {
       const result = await api(`/api/entries?offset=${offset}`);
-      for (const entry of result.entries) {
+      const columns = Number(getComputedStyle(gallery).getPropertyValue('--gallery-columns'));
+      const firstRowImages = [];
+      for (const [index, entry] of result.entries.entries()) {
         const figure = document.createElement('figure');
         const img = document.createElement('img');
         img.src = entry.imageUrl;
         img.alt = entry.caption;
         img.width = 900;
         img.height = 600;
-        img.loading = offset === 0 && gallery.children.length < 2 ? 'eager' : 'lazy';
+        const firstRow = offset === 0 && index < columns;
+        img.loading = firstRow ? 'eager' : 'lazy';
         img.decoding = 'async';
         const caption = document.createElement('figcaption');
         caption.textContent = [entry.caption, entry.displayName, entry.year].filter(Boolean).join(', ');
         figure.append(img, caption);
         gallery.append(figure);
+        if (firstRow) firstRowImages.push(img.decode().catch(() => {}));
+      }
+      if (offset === 0) {
+        await Promise.all(firstRowImages);
+        finishLoading();
       }
       next = result.nextOffset;
       offset = next;
-      status.textContent = result.preview ? 'Layout preview using images from the project sketch. Submission storage is not connected yet.' : (gallery.children.length ? '' : 'No contributions yet.');
+      status.textContent = result.preview ? 'Layout preview using images from the project sketch. Submission storage is not connected yet.' : '';
     } while (next !== null);
     if (gallery.querySelector('figure')) {
       document.querySelector('.gallery-ending').hidden = false;
+    } else {
+      const empty = document.createElement('div');
+      empty.className = 'gallery-empty gallery-state';
+      empty.setAttribute('role', 'status');
+      const message = document.createElement('span');
+      message.className = 'gallery-state-label';
+      message.textContent = 'No contributions yet.';
+      empty.append(message);
+      gallery.append(empty);
     }
   } catch {
     status.textContent = 'The gallery could not be loaded. Please refresh to try again.';
     status.classList.add('error');
+  } finally {
+    finishLoading();
   }
 }
 if (document.querySelector('#gallery')) loadGallery();

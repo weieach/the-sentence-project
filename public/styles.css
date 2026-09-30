@@ -1,4 +1,79 @@
+@font-face {
+  font-family: 'Domaine Sans Text';
+  src: url('/fonts/DomaineSansText-Light.otf') format('opentype');
+  font-weight: 300;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Domaine Sans Text';
+  src: url('/fonts/DomaineSansText-Regular.otf') format('opentype');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Domaine Sans Text';
+  src: url('/fonts/DomaineSansText-RegularItalic.otf') format('opentype');
+  font-weight: 400;
+  font-style: italic;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Domaine Sans Text';
+  src: url('/fonts/DomaineSansText-Medium.otf') format('opentype');
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Domaine Sans Text';
+  src: url('/fonts/DomaineSansText-MediumItalic.otf') format('opentype');
+  font-weight: 500;
+  font-style: italic;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Domaine Sans Text';
+  src: url('/fonts/DomaineSansText-Bold.otf') format('opentype');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Lyon Display';
+  src: url('/fonts/LyonDisplay-Regular.otf') format('opentype');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Lyon Display';
+  src: url('/fonts/LyonDisplay-Bold.otf') format('opentype');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Pitch';
+  src: url('/fonts/Pitch-BoldItalic.otf') format('opentype');
+  font-weight: 700;
+  font-style: italic;
+  font-display: swap;
+}
+
 :root {
+  --font-sans: 'Domaine Sans Text', Arial, Helvetica, sans-serif;
+  --font-serif: 'Lyon Display', Georgia, serif;
+  --font-caption: 'Pitch', 'Courier New', monospace;
   --paper: #f8ebba;
   --ink: #292624;
   --olive: #827858;
@@ -8,7 +83,7 @@
   --page-margin: 6.4%;
   --contact-top-padding: 4rem;
   --page-background: var(--about);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-sans);
   color: var(--ink);
   background: var(--page-background);
   font-synthesis: none;
@@ -111,40 +186,23 @@ button:disabled {
   grid-row: 1;
 }
 
-.brand-symbol {
-  display: flex;
-  align-items: center;
-  gap: .85rem;
-  margin-left: 3.2rem;
-  height: 1.9rem;
-  min-height: 0;
+/* The image is unchanged; this frame excludes its transparent canvas margins. */
+.brand-mark {
+  display: block;
+  position: relative;
+  width: 12rem;
+  aspect-ratio: 4278 / 2018;
+  overflow: hidden;
 }
 
-.brand-symbol img {
-  width: 6.6rem;
+.brand-logo {
+  position: absolute;
+  display: block;
+  width: 116.877045%;
+  max-width: none;
   height: auto;
-  min-height: 0;
-  flex: 0 0 auto;
-}
-
-.brand-symbol::after {
-  content: '';
-  width: 1.16rem;
-  height: 1.16rem;
-  background: var(--olive);
-  border-radius: 50%;
-  flex-shrink: 0;
-}
-
-.brand-name {
-  display: block;
-  font: bold 2.3rem/.94 Georgia, 'Times New Roman', serif;
-  letter-spacing: -.035em;
-}
-
-.brand-name span {
-  display: block;
-  margin-left: 3.3rem;
+  left: -10.28518%;
+  top: -23.934589%;
 }
 
 .tagline {
@@ -153,7 +211,7 @@ button:disabled {
   bottom: -.05rem;
   margin: 0;
   white-space: nowrap;
-  font: bold italic .88rem/1.4 'Courier New', monospace;
+  font: bold italic .88rem/1.4 var(--font-caption);
   letter-spacing: .015em;
 }
 
@@ -173,26 +231,17 @@ button:disabled {
   height: 2.15rem;
   padding: 0 .15rem;
   font-size: 1rem;
-  font-weight: 500;
+  font-weight: 300;
   letter-spacing: .01em;
   line-height: 1;
   text-decoration: none;
 }
 
-.site-nav a:not(.nav-action)::before {
-  content: '';
-  position: absolute;
-  left: -1.05rem;
-  width: .5rem;
-  height: .5rem;
-  border-radius: 50%;
-  background: var(--olive);
-  transform: scale(0);
-  transition: transform 300ms ease;
-}
-
-.site-nav a:not(.nav-action):is(:hover, :focus-visible)::before {
-  transform: scale(1);
+.site-nav :is(a:not([data-upload-link]), a[data-upload-link][aria-current="page"], .admin-logout):is(:hover, :focus-visible) {
+  text-decoration: underline;
+  text-decoration-color: var(--olive);
+  text-decoration-thickness: 3px;
+  text-underline-offset: .4em;
 }
 
 .site-nav:has(.nav-action:not([hidden])) {
@@ -227,7 +276,7 @@ button:disabled {
   border: 0;
   background: var(--ink);
   color: #fff;
-  font: 500 1rem/1 Arial, Helvetica, sans-serif;
+  font: 300 1rem/1 var(--font-sans);
   letter-spacing: .01em;
   text-decoration: none;
   box-shadow: none;
@@ -276,9 +325,38 @@ body[data-page="upload"] main {
 }
 
 .gallery {
+  --gallery-columns: 2;
+  --gallery-caption-size: .9rem;
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: repeat(var(--gallery-columns), minmax(0, 1fr));
   gap: 2.1rem 1rem;
+}
+
+.gallery-state {
+  position: relative;
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: inherit;
+  column-gap: inherit;
+  padding-bottom: calc(.45rem + var(--gallery-caption-size) * 1.45);
+}
+
+/* One image cell plus its caption reserves a row at every gallery breakpoint. */
+.gallery-state::before {
+  content: '';
+  aspect-ratio: 1.5;
+}
+
+.gallery-state-label {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.gallery[aria-busy="true"] figure {
+  display: none;
 }
 
 .gallery figure {
@@ -297,8 +375,12 @@ body[data-page="upload"] main {
 .gallery figcaption,
 .admin-entry figcaption {
   margin-top: .45rem;
-  font: bold italic .9rem/1.45 'Courier New', monospace;
+  font: bold italic .9rem/1.45 var(--font-caption);
   overflow-wrap: anywhere;
+}
+
+.gallery figcaption {
+  font-size: var(--gallery-caption-size);
 }
 
 .gallery-ending {
@@ -309,40 +391,11 @@ body[data-page="upload"] main {
   padding-block: var(--contact-top-padding);
 }
 
-.gallery-end {
-  --divider-thickness: 1px;
-  grid-column: 1 / -1;
-  display: flex;
-  align-items: center;
-  gap: .85rem;
-  flex-shrink: 0;
-}
-
-.gallery-end::before,
-.gallery-end::after {
-  content: "";
-  flex: 1;
-  height: var(--divider-thickness);
-  background: var(--ink);
-}
-
-.gallery-end span {
-  width: 3px;
-  height: 3px;
-  border-radius: 50%;
-  background: var(--ink);
-  flex: none;
-}
-
-.gallery-end span + span {
-  margin-left: -.25rem;
-}
-
 .gallery-invitation {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 1rem;
+  gap: 1.5rem;
   margin-top: var(--contact-top-padding);
   text-align: center;
 }
@@ -404,6 +457,7 @@ p {
 }
 
 .contact-intro {
+  font-weight: 300;
   grid-column: 1 / -1;
   font-size: clamp(1.5rem, 1.8vw, 2rem);
   line-height: 1.5;
@@ -488,7 +542,7 @@ p {
 .form-row>label,
 .split-label label,
 .choice-label {
-  font: 1rem/1.25 Georgia, 'Times New Roman', serif;
+  font: 1rem/1.25 var(--font-serif);
 }
 
 .split-label {
@@ -503,7 +557,7 @@ p {
   width: auto;
   margin: 0;
   flex: 0 0 auto;
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-sans);
 }
 
 input:not([type="radio"]):not([type="file"]),
@@ -560,7 +614,7 @@ input.photo-input {
   border: 1px solid var(--ink);
   background: #fff;
   padding: .35rem .65rem;
-  font: 1rem/1.2 Arial, Helvetica, sans-serif;
+  font: 1rem/1.2 var(--font-sans);
   cursor: pointer;
 }
 
@@ -611,7 +665,7 @@ input[type="radio"] {
 .choice-row legend {
   width: 100%;
   min-width: 0;
-  font: 1rem/1.25 Georgia, serif;
+  font: 1rem/1.25 var(--font-serif);
   padding: 0;
   margin: 0 0 .5rem;
 }
@@ -698,7 +752,7 @@ input[type="radio"] {
 
 .dialog h2 {
   margin: 0 0 1rem;
-  font: bold 2rem Georgia, serif;
+  font: bold 2rem var(--font-serif);
 }
 
 .dialog p {
@@ -759,7 +813,7 @@ body[data-page="admin"] {
 
 .admin-main h1 {
   margin: 0 0 2rem;
-  font: bold 2rem Georgia, serif;
+  font: bold 2rem var(--font-serif);
 }
 
 .admin-entry {
@@ -796,12 +850,12 @@ body[data-page="admin"] {
 }
 
 .admin-entry dt {
-  font: .75rem/1.25 Georgia, serif;
+  font: .75rem/1.25 var(--font-serif);
   margin-bottom: .5rem;
 }
 
 .admin-entry-number {
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-sans);
   font-style: normal;
 }
 
@@ -814,6 +868,32 @@ body[data-page="admin"] {
 
 .admin-entry dd:last-child {
   margin-bottom: 0;
+}
+
+.admin-entry-details {
+  min-width: 0;
+}
+
+.entry-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin-top: 1.5rem;
+}
+
+.entry-action {
+  border: 1px solid var(--ink);
+  padding: .5rem 1rem;
+  background: transparent;
+}
+
+.entry-action:hover {
+  background: var(--ink);
+  color: white;
+}
+
+.entry-action-status:not(:empty) {
+  margin-top: .75rem;
 }
 
 .admin-logout {
@@ -844,7 +924,7 @@ body[data-page="admin"] {
 
 @media (min-width: 1601px) {
   .gallery {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    --gallery-columns: 3;
   }
 }
 
@@ -935,8 +1015,7 @@ body[data-page="admin"] {
     transform-origin: center top;
   }
 
-  .brand-symbol,
-  .brand-name {
+  .brand-mark {
     grid-column: 2;
   }
 
@@ -956,27 +1035,12 @@ body[data-page="admin"] {
     max-width: 100%;
   }
 
-  .brand-name {
-    font-size: 2rem;
+  .brand-mark {
+    width: 10.5rem;
   }
 
-  .brand-symbol {
-    height: 1.6rem;
+  .gallery-ending {
     min-height: 0;
-    margin-left: 2.8rem;
-  }
-
-  .brand-symbol img {
-    width: 5.75rem;
-  }
-
-  .brand-symbol::after {
-    width: 1rem;
-    height: 1rem;
-  }
-
-  .brand-name span {
-    margin-left: 2.8rem;
   }
 
   .tagline {
@@ -1001,7 +1065,8 @@ body[data-page="admin"] {
   }
 
   .gallery {
-    grid-template-columns: minmax(0, 1fr);
+    --gallery-columns: 1;
+    --gallery-caption-size: .85rem;
     gap: 1.8rem;
   }
 
@@ -1053,11 +1118,5 @@ body[data-page="admin"] {
 
   .dialog {
     padding: 2rem 1.5rem;
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .site-nav a:not(.nav-action)::before {
-    transition: none;
   }
 }

@@ -7,12 +7,14 @@ create table if not exists public.submissions (
   image_path text not null unique,
   caption text not null check (char_length(caption) between 1 and 500),
   include_name boolean not null default false,
+  is_hidden boolean not null default false,
   sentence text not null default '' check (char_length(sentence) <= 2000),
   hometown text not null default '' check (char_length(hometown) <= 200),
   why_write text not null default '' check (char_length(why_write) <= 4000),
   year integer not null default extract(year from now()),
   created_at timestamptz not null default now()
 );
+alter table public.submissions add column if not exists is_hidden boolean not null default false;
 create index if not exists submissions_gallery_order on public.submissions (created_at desc, id desc);
 alter table public.submissions enable row level security;
 revoke all on public.submissions from anon, authenticated;
@@ -23,7 +25,8 @@ create or replace view public.gallery_entries with (security_invoker = true) as
 select id, caption,
   case when include_name then name else null end as display_name,
   year, image_path, created_at
-from public.submissions;
+from public.submissions
+where not is_hidden;
 revoke all on public.gallery_entries from anon, authenticated;
 grant select on public.gallery_entries to service_role;
 

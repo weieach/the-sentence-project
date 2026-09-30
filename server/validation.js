@@ -2,6 +2,12 @@ import { MAX_IMAGE_BYTES } from './config.js';
 export class HttpError extends Error {
   constructor(status, message) { super(message); this.status = status; }
 }
+export function validateEntryId(value) {
+  if (typeof value !== 'string' || !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(value)) {
+    throw new HttpError(400, 'Invalid submission ID.');
+  }
+  return value;
+}
 export function validateSubmission(form) {
   function text(name, max, required = false) {
     const raw = form.get(name);

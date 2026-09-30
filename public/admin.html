@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="description" content="The Sentence Project: a community archive of personal writing and visual expression.">
   <title>Admin — The Sentence Project</title>
-  <link rel="icon" href="/assets/arrow.png" type="image/png">
+  <link rel="icon" href="/favicon.png" type="image/png">
   <link rel="stylesheet" href="/styles.css">
   <script src="/vendor/gsap.min.js" defer></script>
   <script src="/vendor/ScrollTrigger.min.js" defer></script>
@@ -15,8 +15,7 @@
 <body data-page="admin">
 <header class="site-header">
   <a class="brand" href="/" aria-label="The Sentence Project home">
-    <span class="brand-symbol" aria-hidden="true"><img src="/assets/arrow.png" alt=""></span>
-    <span class="brand-name">Sentence<span>Project</span></span>
+    <span class="brand-mark"><img class="brand-logo" src="/assets/logo.png" width="5000" height="3000" alt=""></span>
     <p class="tagline">stories and sometimes pictures</p>
   </a>
   <nav class="site-nav" aria-label="Main navigation">
@@ -51,6 +50,14 @@
     <div class="form-row"><label for="admin-password">Password</label><input id="admin-password" name="password" type="password" autocomplete="current-password" required maxlength="200" placeholder="Enter your password..."></div>
     <p id="admin-login-status" class="status error" role="alert"></p>
     <button class="action-button" type="submit">Log in</button>
+  </form>
+</dialog>
+<dialog class="dialog" id="delete-dialog" aria-labelledby="delete-title" aria-describedby="delete-description">
+  <form method="dialog">
+    <h2 id="delete-title">Delete submission?</h2>
+    <p id="delete-description">This permanently deletes the submission and its image. This cannot be undone.</p>
+    <button class="action-button" value="delete">Delete submission</button>
+    <button class="action-button secondary-button" value="cancel" autofocus>Cancel</button>
   </form>
 </dialog>
 </body>

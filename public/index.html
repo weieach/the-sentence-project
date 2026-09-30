@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="description" content="The Sentence Project: a community archive of personal writing and visual expression.">
   <title>The Sentence Project</title>
-  <link rel="icon" href="/assets/arrow.png" type="image/png">
+  <link rel="icon" href="/favicon.png" type="image/png">
   <link rel="stylesheet" href="/styles.css">
   <script src="/vendor/gsap.min.js" defer></script>
   <script src="/vendor/ScrollTrigger.min.js" defer></script>
@@ -14,8 +14,7 @@
 <body data-page="home">
 <header class="site-header">
   <a class="brand" href="/" aria-label="The Sentence Project home">
-    <span class="brand-symbol" aria-hidden="true"><img src="/assets/arrow.png" alt=""></span>
-    <span class="brand-name">Sentence<span>Project</span></span>
+    <span class="brand-mark"><img class="brand-logo" src="/assets/logo.png" width="5000" height="3000" alt=""></span>
     <p class="tagline">stories and sometimes pictures</p>
   </a>
   <nav class="site-nav" aria-label="Main navigation">
@@ -25,10 +24,13 @@
   </nav>
 </header>
 <main class="content" aria-label="Gallery">
-  <div class="gallery" id="gallery"></div>
-  <p class="status gallery-status" id="gallery-status" role="status">Loading the gallery…</p>
+  <div class="gallery" id="gallery" aria-busy="true">
+    <div class="gallery-loading gallery-state" role="status">
+      <span class="gallery-state-label">Loading the gallery…</span>
+    </div>
+  </div>
+  <p class="status gallery-status" id="gallery-status" role="status"></p>
   <section class="gallery-ending" hidden aria-label="Participate in a Sentence Project session">
-    <div class="gallery-end" aria-hidden="true"><span></span><span></span><span></span></div>
     <div class="gallery-invitation">
       <p>Part of a Sentence Project session?</p>
       <button class="action-button" type="button" data-upload-link>upload a sentence</button>
