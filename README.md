@@ -70,6 +70,12 @@ Vercel's Function request limit is 4.5 MB, so this app accepts photos up to **4 
 
 The former ChatGPT URL now serves only HTTP 410 (Gone), and its runtime secrets have been removed. Its private hosting record and historical versions remain because the available connector has no undeploy/delete operation. This repository no longer contains the Sites manifest or its deployment build. Supabase remains the same backend, so existing records are preserved.
 
+## Web Analytics
+
+All four pages load `public/analytics.js`, which starts Vercel Web Analytics on HTTPS deployments and skips localhost. This is the plain JavaScript integration; `@vercel/analytics/next` is only for Next.js and is not needed here. It tracks page views without sending form answers or adding custom events. The existing content security policy permits the same-origin analytics script and requests.
+
+In Vercel, select **the-sentence-project → Analytics → Enable**, then deploy the site. Analytics requires a new deployment after enabling it. Visit the deployed site and check the project's Analytics dashboard for traffic. If `/_vercel/insights/script.js` returns 404, confirm Analytics is enabled and redeploy. See the [Vercel setup guide](https://vercel.com/docs/analytics/quickstart).
+
 ## Data and design
 
 The nine form fields follow the supplied sketch. Name, email, session attended, image, caption, and the name-display choice are required; the remaining answers are optional. Images may be JPG, PNG, or WebP up to 4 MB. “Why write?” is limited to 50 words. The gallery returns only image URLs, captions, opted-in names, year, and record IDs; emails and other answers stay private in Supabase. Images themselves are public gallery content.
