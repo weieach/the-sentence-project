@@ -42,6 +42,14 @@ For an existing database, run **`supabase/migrations/20260930_admin_visibility.s
 
 Each submission has **Hide** and **Delete** buttons. Hide removes it from the public gallery while keeping all its information in admin; **Show** restores it. Hidden images retain their existing public storage URL. Delete asks for confirmation, then permanently removes that submission and its image. If image cleanup fails after the record is deleted, the page reports that the remaining image needs to be removed in Supabase. The total count updates after deletion.
 
+**Edit** makes the caption and answers editable in place, including optional answers that were previously blank. Other entries dim and cannot be edited until you finish. **Cancel** restores the original values; **Save** validates and updates the entry in Supabase. Failed saves keep the draft available to retry. The image, submission timestamp, and entry ID remain unchanged. No additional database migration is needed for editing.
+
+The dropdown next to **All submissions** changes only the admin viewing order: **Latest to oldest**, **Oldest to latest**, or **Gallery order**. It does not save changes to the public gallery. **Gallery order** shows the currently published arrangement. **Move up** and **Move down** reposition individual entries in the public gallery and switch the admin view to Gallery order. Hidden entries keep their place in the admin list but remain excluded from the gallery; new submissions appear first in a custom arrangement. Ordering controls are unavailable while editing or loading the complete list.
+
+The admin header also includes **change order...**, which opens a thumbnail dialog in the current public gallery order, independently of the admin viewing order. Click thumbnails to select or deselect multiple entries, or Shift-click to select a range, then drag the selection into place. Alt + arrow keys also move the selection. **Save order** updates the public gallery arrangement while preserving the admin viewing choice; **Cancel** or Escape discards the draft. The dialog is available when there are at least two submissions.
+
+For an existing database, run **`supabase/migrations/20261002_gallery_order.sql`** before using ordering. This migration was applied to the connected project on October 2, 2026. It adds an order setting and an atomic reorder function accessible only to the server. A stale entry list is rejected if submissions were added or deleted; refresh before retrying. Fresh databases receive this setup from `supabase/schema.sql`.
+
 Admin data comes from the protected `/api/admin-entries` endpoint. The public gallery still excludes private fields. Admin login uses its own signed HTTP-only cookie, valid for two hours, separate from upload access; an upload cookie cannot grant admin access. Use **log out** on the admin page to clear the admin cookie. Admin login attempts have the same per-instance in-memory limit as upload login.
 
 ## Hosting on Vercel
@@ -54,7 +62,7 @@ The repository is linked to the Vercel project `the-sentence-project`. Deploy up
 npx vercel --prod
 ```
 
-`vercel.json` serves `public/` as static files and `api/session.js`, `api/entries.js`, `api/admin-session.js`, and `api/admin-entries.js` as Node.js Functions. These use the shared request handler in `server/worker.js` through `server/vercel.js`. `server/index.js` remains the local development server. No frontend build or framework is needed.
+`vercel.json` serves `public/` as static files and `api/session.js`, `api/entries.js`, `api/admin-session.js`, `api/admin-entries.js`, and `api/admin-order.js` as Node.js Functions. These use the shared request handler in `server/worker.js` through `server/vercel.js`. `server/index.js` remains the local development server. No frontend build or framework is needed.
 
 Production environment variables are stored in Vercel's project settings:
 

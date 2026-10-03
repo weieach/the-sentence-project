@@ -76,6 +76,7 @@ for (const runtime of ['local', 'hosted']) {
 
 test('admin storage reads every submitted field from the private table', async () => {
   const storage = createStorage({ url: 'https://project.supabase.co', key: 'sb_secret_test', fetchImpl: async url => {
+    if (url.includes('/gallery_settings')) return Response.json([{sort_order:'newest'}]);
     const parsed = new URL(url);
     assert.equal(parsed.pathname, '/rest/v1/submissions');
     assert.equal(parsed.searchParams.get('offset'), '50');

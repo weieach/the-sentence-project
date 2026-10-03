@@ -69,6 +69,7 @@ test('storage failures do not report successful submissions', async t => {
 });
 test('Supabase gallery adapter only returns public fields', async () => {
   const storage = createStorage({ url: 'https://project.supabase.co', key: 'server-key', fetchImpl: async (url, options) => {
+    if (url.includes('/gallery_settings')) return Response.json([{sort_order:'newest'}]);
     assert.match(url, /gallery_entries\?select=/);
     assert.match(url, /offset=50/);
     assert.equal(options.headers.Authorization, 'Bearer server-key');

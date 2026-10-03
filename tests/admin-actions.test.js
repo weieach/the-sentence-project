@@ -4,10 +4,11 @@ import { once } from 'node:events';
 import { createApp } from '../server/index.js';
 import { createWorker } from '../server/worker.js';
 import { createStorage } from '../server/storage.js';
-import { HttpError } from '../server/validation.js';
+import { HttpError, validateEntryUpdate } from '../server/validation.js';
 
 const firstId = '11111111-1111-4111-8111-111111111111';
 const secondId = '22222222-2222-4222-8222-222222222222';
+const edits = { name: 'Updated writer', email: 'writer@example.org', session_attended: 'Fall session', caption: 'Updated caption', include_name: true, sentence: 'A'.repeat(1500), hometown: '', why_write: '', year: 2026 };
 const credentials = { username: 'test-admin', password: 'test-password' };
 for (const runtime of ['local', 'hosted']) {
   test(`${runtime}: only admins can hide, restore, or delete one submission`, async t => {
@@ -23,6 +24,14 @@ for (const runtime of ['local', 'hosted']) {
         mutations.push(['visibility', id, hidden]);
         row.is_hidden = hidden;
         return { id, hidden };
+      },
+      update: async (id, data) => {
+        const row = rows.find(row => row.id === id);
+        if (!row) throw new HttpError(404, 'Missing submission.');
+        if (data.name === 'Simulated outage') throw new HttpError(502, 'Storage unavailable.');
+        Object.assign(row, data);
+        mutations.push(['edit', id]);
+        return { entry: { ...row } };
       },
       remove: async id => {
         const index = rows.findIndex(row => row.id === id);
@@ -65,7 +74,21 @@ for (const runtime of ['local', 'hosted']) {
     for (const data of [null, {}, { hidden: 'true' }, { hidden: 1 }]) assert.equal((await action('PATCH', data)).status, 400);
     assert.equal((await action('PATCH', { hidden: true }, { 'Content-Type': 'text/plain' })).status, 415);
     assert.equal((await request(endpoint, { method: 'PATCH', headers: { cookie, 'Content-Type': 'application/json' }, body: '{' })).status, 400);
+    for (const invalidCookie of ['', uploadCookie, cookie + 'x']) assert.equal((await action('PATCH', { entry: edits }, { cookie: invalidCookie })).status, 401);
+    assert.equal((await action('PATCH', { entry: edits }, { Origin: 'https://other.example' })).status, 403);
+    for (const fields of [{...edits, email:'bad'}, {...edits, id:secondId}, {...edits, include_name:'true'}, {...edits, year:1}, {...edits, why_write:'word '.repeat(51)}]) {
+      assert.equal((await action('PATCH', { entry: fields })).status, 400);
+    }
     assert.deepEqual(mutations, []);
+    const saved = await action('PATCH', { entry: edits });
+    assert.equal(saved.status, 200);
+    assert.equal((await saved.json()).entry.caption, edits.caption);
+    assert.equal(rows[0].sentence, edits.sentence);
+    assert.equal(rows[1].caption, undefined);
+    assert.equal(rows[0].is_hidden, false);
+    assert.equal((await action('PATCH', { entry:{...edits,name:'Simulated outage'} })).status, 502);
+    assert.equal(rows[0].name, edits.name);
+    assert.equal((await (await request('/api/entries')).json()).entries[0].caption, edits.caption);
     assert.deepEqual(await (await action('PATCH', { hidden: true })).json(), { id: firstId, hidden: true });
     assert.deepEqual((await (await request('/api/entries')).json()).entries.map(row => row.id), [secondId]);
     assert.equal((await (await request('/api/admin-entries', { headers: { cookie } })).json()).entries.length, 2);
@@ -74,6 +97,7 @@ for (const runtime of ['local', 'hosted']) {
     assert.deepEqual(await (await action('DELETE')).json(), { deleted: true });
     assert.deepEqual(rows.map(row => row.id), [secondId]);
     assert.equal((await action('DELETE')).status, 404);
+    assert.equal((await action('PATCH', {entry:edits})).status, 404);
     assert.equal((await action('PATCH', { hidden: false })).status, 404);
   });
 }
@@ -121,4 +145,23 @@ test('missing or failed database deletion never deletes an image; cleanup failur
       assert.equal(calls, 1);
     }
   }
+});
+
+
+test('entry edits validate text and preserve protected database fields', async () => {
+  for (const field of ['id', 'image_path', 'created_at', 'is_hidden']) assert.throws(() => validateEntryUpdate({...edits,[field]:'changed'}), {status:400});
+  const calls = [];
+  const storage = createStorage({url:'https://project.supabase.co',key:'sb_secret_test',fetchImpl:async (url, options) => {
+    calls.push({url,options});
+    return Response.json([{id:firstId}]);
+  }});
+  const result = await storage.update(firstId, {...edits,name:'  Updated writer  '});
+  assert.equal(result.entry.name, 'Updated writer');
+  assert.equal(new URL(calls[0].url).searchParams.get('id'), `eq.${firstId}`);
+  assert.deepEqual(JSON.parse(calls[0].options.body), edits);
+  assert.equal(calls[0].options.headers.Prefer, 'return=representation');
+  const missing = createStorage({url:'https://project.supabase.co',key:'sb_secret_test',fetchImpl:async()=>Response.json([])});
+  await assert.rejects(missing.update(firstId, edits), {status:404});
+  const failed = createStorage({url:'https://project.supabase.co',key:'sb_secret_test',fetchImpl:async()=>new Response('',{status:500})});
+  await assert.rejects(failed.update(firstId, edits), /Supabase request failed/);
 });

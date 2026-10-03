@@ -37,5 +37,5 @@ test('new Supabase secret keys use apikey without an invalid JWT header', async 
   } });
   await storage.list(0);
   await storage.save({ id: 'test' }, png, 'image/png');
-  assert.equal(requests.length, 3);
+  assert.equal(requests.length, 4);
 });
