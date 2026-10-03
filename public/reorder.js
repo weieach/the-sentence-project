@@ -16,6 +16,7 @@ export function initOrderDialog({ button, getEntries, saveOrder }) {
   const status = document.querySelector('#reorder-status');
   const save = document.querySelector('#reorder-save');
   const cancel = document.querySelector('#reorder-cancel');
+  const sort = document.querySelector('#reorder-sort');
   let items = [];
   let articles = new Map();
   let selected = new Set();
@@ -63,9 +64,22 @@ export function initOrderDialog({ button, getEntries, saveOrder }) {
     selected = new Set();
     anchor = null;
     suppressClick = false;
+    sort.value = '';
     render();
     announce();
     dialog.showModal();
+    grid.scrollTop = 0;
+  });
+  sort.addEventListener('change', () => {
+    if (saving) return;
+    const direction = sort.value === 'oldest' ? 1 : -1;
+    items.sort((a, b) => direction * (
+      articles.get(a).dataset.createdAt.localeCompare(articles.get(b).dataset.createdAt) || a.localeCompare(b)
+    ));
+    selected.clear();
+    anchor = null;
+    render();
+    announce();
     grid.scrollTop = 0;
   });
   grid.addEventListener('click', event => {
@@ -93,6 +107,7 @@ export function initOrderDialog({ button, getEntries, saveOrder }) {
     const target = items[backwards ? Math.min(...indices) - 1 : Math.max(...indices) + 1];
     if (target === undefined) return;
     items = moveSelection(items, selected, target, !backwards);
+    sort.value = '';
     render(id);
     announce();
   });
@@ -166,7 +181,10 @@ export function initOrderDialog({ button, getEntries, saveOrder }) {
   grid.addEventListener('pointerup', event => {
     if (!drag || event.pointerId !== drag.pointer) return;
     const { active, id } = drag;
-    if (active && drop) items = moveSelection(items, selected, drop.target, drop.after);
+    if (active && drop) {
+      items = moveSelection(items, selected, drop.target, drop.after);
+      sort.value = '';
+    }
     stopDrag();
     if (active) {
       suppressClick = true;
@@ -183,12 +201,12 @@ export function initOrderDialog({ button, getEntries, saveOrder }) {
   save.addEventListener('click', async () => {
     if (saving) return;
     saving = true;
-    save.disabled = cancel.disabled = true;
+    save.disabled = cancel.disabled = sort.disabled = true;
     grid.inert = true;
     status.classList.remove('error');
     status.textContent = 'Saving order...';
     try {
-      const result = await saveOrder(items.map(id => articles.get(id)));
+      const result = await saveOrder(items.map(id => articles.get(id)), sort.value || 'custom');
       if (result.ok || result.authenticated === false) dialog.close();
       else { status.classList.add('error'); status.textContent = result.message || 'Could not save. Please try again.'; }
     } catch {
@@ -196,7 +214,7 @@ export function initOrderDialog({ button, getEntries, saveOrder }) {
       status.textContent = 'Could not save. Your changes are still here; please try again.';
     } finally {
       saving = false;
-      save.disabled = cancel.disabled = false;
+      save.disabled = cancel.disabled = sort.disabled = false;
       grid.inert = false;
     }
   });

@@ -853,6 +853,18 @@ body[data-page="admin"] {
   border-bottom: 1px solid rgb(41 38 36 / 15%);
 }
 
+.reorder-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.reorder-heading h2 {
+  margin: 0;
+}
+
 .reorder-grid {
   flex: 1;
   display: grid;
@@ -939,17 +951,41 @@ body[data-page="admin"] {
   outline-color: var(--ink);
 }
 
-#admin-order {
+.admin-order-field {
+  position: relative;
+  display: inline-flex;
   max-width: 100%;
   border: 1px solid var(--ink);
+}
+
+.admin-order-field::after {
+  content: '';
+  position: absolute;
+  right: 1rem;
+  top: 50%;
+  width: .3rem;
+  height: .3rem;
+  border-right: 1px solid currentColor;
+  border-bottom: 1px solid currentColor;
+  transform: translateY(-75%) rotate(45deg);
+  pointer-events: none;
+}
+
+#admin-order,
+#reorder-sort {
+  appearance: none;
+  max-width: 100%;
+  min-width: 0;
+  border: 0;
   border-radius: 0;
-  padding: .5rem;
+  padding: .5rem 2rem .5rem 1rem;
   background: transparent;
   color: inherit;
   font: inherit;
 }
 
 #admin-order,
+#reorder-sort,
 #change-order {
   font-size: .85rem;
 }
@@ -1145,6 +1181,8 @@ body[data-page="admin"] {
   }
 
   .reorder-header, .reorder-grid { padding: 1rem; }
+  .reorder-heading { gap: .5rem; }
+  .reorder-heading h2 { font-size: 1.4rem; }
   .reorder-actions { padding: 1rem; gap: .5rem; }
   .reorder-actions .entry-action { padding: .5rem .65rem; font-size: .85rem; }
   .reorder-actions #reorder-status { font-size: .85rem; }

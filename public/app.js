@@ -189,7 +189,7 @@ function getGalleryEntries() {
 }
 function applyAdminViewOrder() {
   const entries = getGalleryEntries();
-  if (adminOrder.value !== 'custom') {
+  if (adminOrder.value && adminOrder.value !== 'custom') {
     const direction = adminOrder.value === 'oldest' ? 1 : -1;
     entries.sort((a, b) => direction * (
       a.dataset.createdAt.localeCompare(b.dataset.createdAt) || a.dataset.entryId.localeCompare(b.dataset.entryId)
@@ -209,7 +209,7 @@ async function saveAdminOrder(order, entries) {
   try {
     await api('/api/admin-order', {
       method: 'PUT', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ order, ...(entries ? { ids: entries.map(entry => entry.dataset.entryId) } : {}) }),
+      body: JSON.stringify({ order, ...(entries && order === 'custom' ? { ids: entries.map(entry => entry.dataset.entryId) } : {}) }),
     });
     if (entries) {
       galleryEntries = [...entries];
@@ -508,8 +508,8 @@ if (adminEntries) {
     initOrderDialog({
       button: changeOrder,
       getEntries: getGalleryEntries,
-      saveOrder: async entries => ({
-        ok: await saveAdminOrder('custom', entries),
+      saveOrder: async (entries, order) => ({
+        ok: await saveAdminOrder(order, entries),
         message: document.querySelector('#admin-entries-status').textContent,
         authenticated: adminListReady,
       }),

@@ -41,11 +41,14 @@
   <div class="admin-heading">
     <h1>All submissions <span id="admin-entry-count"></span></h1>
     <div class="admin-heading-controls">
+    <span class="admin-order-field">
     <select id="admin-order" aria-label="Admin viewing order" disabled>
+      <option value="" selected disabled hidden>View order</option>
       <option value="newest">Latest to oldest</option>
       <option value="oldest">Oldest to latest</option>
-      <option value="custom" selected>Gallery order</option>
+      <option value="custom">Custom order</option>
     </select>
+    </span>
     <button id="change-order" class="entry-action" type="button" data-icon="arrows-down-up" disabled>change order...</button>
     </div>
   </div>
@@ -79,14 +82,23 @@
 </dialog>
 <dialog class="dialog reorder-dialog" id="reorder-dialog" aria-labelledby="reorder-title" aria-describedby="reorder-help">
   <div class="reorder-header">
-  <h2 id="reorder-title">Change order</h2>
+  <div class="reorder-heading">
+    <h2 id="reorder-title">Change order</h2>
+    <span class="admin-order-field">
+      <select id="reorder-sort" aria-label="Sort submissions">
+        <option value="" selected disabled>sort by...</option>
+        <option value="newest">Latest to oldest</option>
+        <option value="oldest">Oldest to latest</option>
+      </select>
+    </span>
+  </div>
   <p id="reorder-help">Select one or more thumbnails, then drag them into place, or use Alt + arrow keys to move your selection.</p>
   </div>
   <div class="reorder-grid" id="reorder-grid" aria-label="Submission thumbnails"></div>
   <div class="reorder-actions">
     <p class="status" id="reorder-status" role="status"></p>
-    <button class="entry-action" id="reorder-cancel" type="button" data-icon="x">Cancel</button>
-    <button class="entry-action" id="reorder-save" type="button" data-icon="check">Save order</button>
+    <button class="entry-action" id="reorder-cancel" type="button">Cancel</button>
+    <button class="entry-action" id="reorder-save" type="button">Apply order</button>
   </div>
 </dialog>
 <dialog class="dialog" id="delete-dialog" aria-labelledby="delete-title" aria-describedby="delete-description">
